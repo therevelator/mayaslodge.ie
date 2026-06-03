@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2c7da0"/>
+      <stop offset="1" stop-color="#1b4965"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#g)"/>
+  <g opacity="0.108">
+    <path transform="translate(936 256) rotate(0) translate(0 -64.8)" d="M0 115.2 C -198.00000000000003 -18, -64.8 -180, 0 -64.8 C 64.8 -180, 198.00000000000003 -18, 0 115.2 Z" fill="#ffffff" opacity="1"/><path transform="translate(936 256) rotate(90) translate(0 -64.8)" d="M0 115.2 C -198.00000000000003 -18, -64.8 -180, 0 -64.8 C 64.8 -180, 198.00000000000003 -18, 0 115.2 Z" fill="#ffffff" opacity="1"/><path transform="translate(936 256) rotate(180) translate(0 -64.8)" d="M0 115.2 C -198.00000000000003 -18, -64.8 -180, 0 -64.8 C 64.8 -180, 198.00000000000003 -18, 0 115.2 Z" fill="#ffffff" opacity="1"/><path transform="translate(936 256) rotate(270) translate(0 -64.8)" d="M0 115.2 C -198.00000000000003 -18, -64.8 -180, 0 -64.8 C 64.8 -180, 198.00000000000003 -18, 0 115.2 Z" fill="#ffffff" opacity="1"/>
+    <path transform="translate(216 624) rotate(0) translate(0 -43.199999999999996)" d="M0 76.8 C -132 -12, -43.199999999999996 -120, 0 -43.199999999999996 C 43.199999999999996 -120, 132 -12, 0 76.8 Z" fill="#ffffff" opacity="1"/><path transform="translate(216 624) rotate(90) translate(0 -43.199999999999996)" d="M0 76.8 C -132 -12, -43.199999999999996 -120, 0 -43.199999999999996 C 43.199999999999996 -120, 132 -12, 0 76.8 Z" fill="#ffffff" opacity="1"/><path transform="translate(216 624) rotate(180) translate(0 -43.199999999999996)" d="M0 76.8 C -132 -12, -43.199999999999996 -120, 0 -43.199999999999996 C 43.199999999999996 -120, 132 -12, 0 76.8 Z" fill="#ffffff" opacity="1"/><path transform="translate(216 624) rotate(270) translate(0 -43.199999999999996)" d="M0 76.8 C -132 -12, -43.199999999999996 -120, 0 -43.199999999999996 C 43.199999999999996 -120, 132 -12, 0 76.8 Z" fill="#ffffff" opacity="1"/>
+  </g>
+  <g transform="translate(600 360)">
+    <path transform="translate(0 -60) rotate(0) translate(0 -27)" d="M0 48 C -82.5 -7.5, -27 -75, 0 -27 C 27 -75, 82.5 -7.5, 0 48 Z" fill="#ffffff" opacity="0.92"/><path transform="translate(0 -60) rotate(90) translate(0 -27)" d="M0 48 C -82.5 -7.5, -27 -75, 0 -27 C 27 -75, 82.5 -7.5, 0 48 Z" fill="#ffffff" opacity="0.92"/><path transform="translate(0 -60) rotate(180) translate(0 -27)" d="M0 48 C -82.5 -7.5, -27 -75, 0 -27 C 27 -75, 82.5 -7.5, 0 48 Z" fill="#ffffff" opacity="0.92"/><path transform="translate(0 -60) rotate(270) translate(0 -27)" d="M0 48 C -82.5 -7.5, -27 -75, 0 -27 C 27 -75, 82.5 -7.5, 0 48 Z" fill="#ffffff" opacity="0.92"/>
+  </g>
+  <text x="600" y="510" text-anchor="middle" font-family="Georgia, serif" font-size="44" fill="#ffffff" opacity="0.96">Maya's Lodge</text>
+  <text x="600" y="560" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#ffffff" opacity="0.7" letter-spacing="3">PHOTO COMING SOON</text>
+</svg>

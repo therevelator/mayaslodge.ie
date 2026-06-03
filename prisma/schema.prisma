@@ -1,0 +1,151 @@
+// Maya's Lodge — data model
+// Prices are stored as integer euro-cents to avoid floating point issues.
+// SQLite does not support native enums, so status/source are validated in app code
+// (see lib/constants.ts).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+}
+
+model Room {
+  id          String      @id @default(cuid())
+  slug        String      @unique
+  name        String
+  roomType    String // e.g. "Double", "Twin", "Family", "Single"
+  shortDesc   String? // one-line teaser for cards
+  description String // full description (guest-facing)
+  maxGuests   Int         @default(2)
+  bedConfig   String? // e.g. "1 King bed" / "2 Single beds"
+  sizeSqm     Int? // room size in square metres
+  basePrice   Int // price per night, in euro-cents
+  published   Boolean     @default(true)
+  sortOrder   Int         @default(0)
+  images      RoomImage[]
+  amenities   Amenity[]   @relation("RoomAmenities")
+  beds        Bed[]
+  bookings    Booking[]
+  availability AvailabilityWindow[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+// A room can have several beds. Each row is a bed type and how many of them.
+model Bed {
+  id        String @id @default(cuid())
+  roomId    String
+  room      Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  type      String // "Single", "Double", "King", etc.
+  quantity  Int    @default(1)
+  sortOrder Int    @default(0)
+}
+
+// A date range during which a room is OPEN for online booking. Rooms are closed
+// by default (no windows) — the owner opens dates explicitly. A day is bookable
+// by a guest only if it falls inside a window AND has no blocking booking.
+// Interval is half-open [start, end): the last bookable night is end - 1 day.
+model AvailabilityWindow {
+  id        String   @id @default(cuid())
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  start     DateTime // UTC midnight, inclusive
+  end       DateTime // UTC midnight, exclusive
+  createdAt DateTime @default(now())
+
+  @@index([roomId, start, end])
+}
+
+model RoomImage {
+  id        String  @id @default(cuid())
+  roomId    String
+  room      Room    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  sortOrder Int     @default(0)
+}
+
+model Amenity {
+  id       String  @id @default(cuid())
+  key      String  @unique // machine key, e.g. "private_bathroom"
+  label    String // guest-facing label, e.g. "Private bathroom"
+  icon     String // icon key, see components/Icon.tsx
+  category String? // grouping, e.g. "Bathroom", "Comfort", "Kitchen"
+  sortOrder Int    @default(0)
+  rooms    Room[]  @relation("RoomAmenities")
+}
+
+model Booking {
+  id         String   @id @default(cuid())
+  roomId     String
+  room       Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  guestName  String
+  guestEmail String?
+  guestPhone String?
+  checkIn    DateTime // stored at 00:00 UTC of arrival day
+  checkOut   DateTime // stored at 00:00 UTC of departure day (guest leaves this morning)
+  guests     Int      @default(1)
+  message    String?
+  status     String   @default("PENDING") // PENDING | CONFIRMED | DECLINED | CANCELLED
+  source     String   @default("WEBSITE") // WEBSITE | MANUAL | BLOCK | BOOKING_COM
+  nights     Int?
+  totalPrice Int? // euro-cents, snapshot at request time
+
+  // Technical metadata captured server-side when a guest submits a request.
+  // Disclosed in the Privacy Policy (security / fraud-prevention / records).
+  ipAddress      String?
+  ipCountry      String?
+  ipRegion       String?
+  ipCity         String?
+  userAgent      String?
+  acceptLanguage String?
+  referer        String?
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([roomId, checkIn, checkOut])
+  @@index([status])
+}
+
+// Single-row table (id is always 1) holding editable site-wide content.
+model Setting {
+  id            Int     @id @default(1)
+  propertyName  String  @default("Maya's Lodge")
+  tagline       String  @default("A warm Irish welcome")
+  heroHeadline  String  @default("Your home away from home in Ireland")
+  heroSubline   String  @default("A family-run bed & breakfast with six cosy rooms, hearty breakfasts and a proper Irish welcome.")
+  aboutTitle    String  @default("Welcome to Maya's Lodge")
+  aboutBody     String  @default("")
+  addressLine   String  @default("")
+  town          String  @default("")
+  county        String  @default("")
+  eircode       String  @default("")
+  country       String  @default("Ireland")
+  phone         String  @default("")
+  email         String  @default("hello@mayaslodge.ie")
+  checkInTime   String  @default("15:00")
+  checkOutTime  String  @default("11:00")
+  houseRules    String  @default("")
+  breakfastInfo String  @default("A full Irish breakfast is served every morning, included with every room.")
+  facebookUrl   String  @default("")
+  instagramUrl  String  @default("")
+  bookingComUrl String  @default("")
+  mapEmbedUrl   String  @default("")
+  currency      String  @default("EUR")
+  // Auto-delete a booking's technical metadata (IP, location, device) this many
+  // days after it was submitted. 0 = keep indefinitely. The booking is kept.
+  metaRetentionDays Int @default(90)
+  updatedAt     DateTime @updatedAt
+}

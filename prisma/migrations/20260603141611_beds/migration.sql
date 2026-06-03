@@ -1,0 +1,9 @@
+-- CreateTable
+CREATE TABLE "Bed" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "roomId" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "quantity" INTEGER NOT NULL DEFAULT 1,
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
+    CONSTRAINT "Bed_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
