@@ -4,11 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
+    "railway:start": "prisma migrate deploy && tsx prisma/bootstrap.ts && next start",
     "lint": "eslint",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
+    "db:bootstrap": "tsx --env-file=.env prisma/bootstrap.ts",
     "db:reset": "prisma migrate reset",
     "db:studio": "prisma studio",
     "placeholders": "node scripts/gen-placeholders.mjs"
@@ -25,6 +27,7 @@
     "prisma": "^6.19.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "tsx": "^4.22.4",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -36,7 +39,6 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.7",
     "tailwindcss": "^4",
-    "tsx": "^4.22.4",
     "typescript": "^5"
   }
 }
