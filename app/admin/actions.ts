@@ -448,6 +448,7 @@ export async function saveSettings(formData: FormData) {
       mapEmbedUrl: str("mapEmbedUrl"),
       currency: str("currency") || "EUR",
       metaRetentionDays: Math.max(0, Math.min(3650, parseInt(str("metaRetentionDays"), 10) || 0)),
+      comingSoon: Boolean(formData.get("comingSoon")),
     },
   });
   revalidatePath("/", "layout");

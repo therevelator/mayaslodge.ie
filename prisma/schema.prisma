@@ -147,5 +147,8 @@ model Setting {
   // Auto-delete a booking's technical metadata (IP, location, device) this many
   // days after it was submitted. 0 = keep indefinitely. The booking is kept.
   metaRetentionDays Int @default(90)
+  // When true, the public site shows a "coming soon" splash instead of the
+  // full site. Toggle from admin settings. Admin stays accessible.
+  comingSoon    Boolean @default(true)
   updatedAt     DateTime @updatedAt
 }

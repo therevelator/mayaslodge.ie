@@ -46,6 +46,24 @@ export default async function AdminSettingsPage({
       )}
 
       <form action={saveSettings} className="space-y-6">
+        <section className={`card p-6 ${s.comingSoon ? "ring-1 ring-orange/40" : ""}`}>
+          <h2 className="text-lg font-semibold text-brand-dark">Site status</h2>
+          <label className="mt-3 flex items-start gap-3">
+            <input type="checkbox" name="comingSoon" defaultChecked={s.comingSoon} className="mt-1 h-4 w-4 accent-[var(--color-orange)]" />
+            <span>
+              <span className="text-sm font-medium text-ink">Maintenance mode</span>
+              <span className="block text-sm text-muted">
+                When on, visitors to the public site see a &ldquo;down for
+                maintenance&rdquo; page. Your admin stays accessible. Turn this
+                off to make the full website live.
+              </span>
+              <span className={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${s.comingSoon ? "bg-orange/15 text-orange-dark" : "bg-brand-light text-brand-dark"}`}>
+                {s.comingSoon ? "Currently: maintenance (site hidden)" : "Currently: live"}
+              </span>
+            </span>
+          </label>
+        </section>
+
         <section className="card p-6">
           <h2 className="text-lg font-semibold text-brand-dark">Brand & homepage</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
