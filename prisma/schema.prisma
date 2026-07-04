@@ -31,7 +31,7 @@ model Room {
   bedConfig   String? // e.g. "1 King bed" / "2 Single beds"
   sizeSqm     Int? // room size in square metres
   basePrice   Int // price per night, in euro-cents
-  published   Boolean     @default(true)
+  published   Boolean     @default(false) // rooms are hidden by default
   sortOrder   Int         @default(0)
   images      RoomImage[]
   amenities   Amenity[]   @relation("RoomAmenities")

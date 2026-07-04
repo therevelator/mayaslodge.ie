@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/admin/bookings", label: "Bookings" },
   { href: "/admin/calendar", label: "Calendar" },
   { href: "/admin/rooms", label: "Rooms" },
+  { href: "/admin/visibility", label: "Show / Hide" },
   { href: "/admin/settings", label: "Settings" },
 ];
 

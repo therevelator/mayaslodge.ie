@@ -4,7 +4,6 @@ import { getSettings } from "@/lib/settings";
 import { RoomCard } from "@/components/site/RoomCard";
 import { CloverMark, LogoMark } from "@/components/Logo";
 import { Icon } from "@/components/Icon";
-import { formatPrice } from "@/lib/format";
 
 export default async function HomePage() {
   const [settings, rooms] = await Promise.all([
@@ -15,10 +14,6 @@ export default async function HomePage() {
       include: { images: { orderBy: { sortOrder: "asc" } }, amenities: true },
     }),
   ]);
-
-  const fromPrice = rooms.length
-    ? Math.min(...rooms.map((r) => r.basePrice))
-    : 0;
 
   return (
     <>
@@ -46,15 +41,6 @@ export default async function HomePage() {
                 Get in touch
               </Link>
             </div>
-            {fromPrice > 0 && (
-              <p className="mt-6 text-sm text-cream/70">
-                Rooms from{" "}
-                <span className="font-semibold text-white">
-                  {formatPrice(fromPrice, settings.currency)}
-                </span>{" "}
-                per night, breakfast included.
-              </p>
-            )}
           </div>
 
           <div className="flex items-center justify-center">
@@ -69,8 +55,8 @@ export default async function HomePage() {
       {/* ---------------- Highlights ---------------- */}
       <section className="container-page -mt-10 relative grid gap-4 sm:grid-cols-3">
         {[
-          { icon: "breakfast", title: "Full Irish breakfast", body: "Cooked fresh each morning and included with every room." },
-          { icon: "family", title: "Family-run welcome", body: "Six cosy rooms and the warm hospitality of a real Irish home." },
+          { icon: "breakfast", title: "Full Irish breakfast", body: "Cooked fresh each morning, available on request for €10 per person, per day." },
+          { icon: "family", title: "Family-run welcome", body: "Cosy rooms and the warm hospitality of a real Irish home." },
           { icon: "wave", title: "Perfectly placed", body: "Minutes from Dublin Airport and the city centre, with the coast close by." },
         ].map((f) => (
           <div key={f.title} className="card p-6">

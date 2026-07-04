@@ -6,7 +6,7 @@ import { RoomCard } from "@/components/site/RoomCard";
 export const metadata: Metadata = {
   title: "Our Rooms",
   description:
-    "Browse the six rooms at Maya's Lodge — doubles, twins, a family room and a suite, all with a hearty Irish breakfast included.",
+    "Browse the rooms at Maya's Lodge — doubles, twins, a family room and a suite. Choose your dates and send a booking request.",
 };
 
 export default async function RoomsPage() {
@@ -28,16 +28,15 @@ export default async function RoomsPage() {
           </p>
           <h1 className="mt-2 text-4xl font-semibold sm:text-5xl">Our rooms</h1>
           <p className="mt-3 max-w-2xl text-cream/80">
-            Six individually styled rooms, each with a hearty Irish breakfast
-            included. Pick the one that suits you, choose your dates and send a
-            request — we&rsquo;ll confirm by email.
+            Individually styled rooms. Pick the one that suits you, choose your
+            dates and send a request.
           </p>
         </div>
       </section>
 
       <section className="container-page py-14">
         {rooms.length === 0 ? (
-          <p className="text-muted">No rooms published yet. Please check back soon.</p>
+          <p className="text-muted">No rooms available. Please check back soon.</p>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {rooms.map((room) => (

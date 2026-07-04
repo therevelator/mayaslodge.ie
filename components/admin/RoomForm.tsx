@@ -201,7 +201,7 @@ export function RoomForm({
 
       <section className="card p-6">
         <label className="flex items-center gap-3">
-          <input type="checkbox" name="published" defaultChecked={room?.published ?? true} className="h-4 w-4 accent-[var(--color-brand)]" />
+          <input type="checkbox" name="published" defaultChecked={room?.published ?? false} className="h-4 w-4 accent-[var(--color-brand)]" />
           <span className="text-sm font-medium text-ink">Published (visible on the website)</span>
         </label>
       </section>

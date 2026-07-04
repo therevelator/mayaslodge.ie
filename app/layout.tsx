@@ -21,10 +21,10 @@ export const metadata: Metadata = {
     template: "%s · Maya's Lodge",
   },
   description:
-    "A family-run Irish bed & breakfast with six cosy rooms, hearty breakfasts and a warm welcome. Check availability and request your stay.",
+    "A family-run Irish bed & breakfast in Dublin with cosy rooms and a warm welcome. Check availability and request your stay.",
   openGraph: {
     title: "Maya's Lodge — Bed & Breakfast in Ireland",
-    description: "Six cosy rooms, hearty breakfasts and a proper Irish welcome.",
+    description: "Cosy rooms and a proper Irish welcome in Dublin.",
     type: "website",
   },
 };

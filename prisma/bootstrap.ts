@@ -68,7 +68,7 @@ async function main() {
         sizeSqm: r.sizeSqm,
         basePrice: r.basePrice,
         sortOrder: i,
-        published: true,
+        published: false, // hidden by default; the owner shows them from admin
         amenities: {
           connect: r.amenityKeys.map(amenityIdByKey).filter((x): x is { id: string } => x !== null),
         },

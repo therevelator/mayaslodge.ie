@@ -77,7 +77,6 @@ export const AMENITY_CATALOG: {
   { key: "tea_coffee", label: "Tea & coffee facilities", icon: "coffee", category: "Kitchen" },
   { key: "kettle", label: "Electric kettle", icon: "kettle", category: "Kitchen" },
   { key: "minifridge", label: "Mini fridge", icon: "fridge", category: "Kitchen" },
-  { key: "breakfast", label: "Breakfast included", icon: "breakfast", category: "Food" },
   { key: "garden_view", label: "Garden view", icon: "leaf", category: "View" },
   { key: "sea_view", label: "Sea view", icon: "wave", category: "View" },
   { key: "mountain_view", label: "Mountain view", icon: "mountain", category: "View" },

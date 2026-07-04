@@ -394,6 +394,20 @@ export async function deleteRoom(formData: FormData) {
   revalidatePath("/rooms");
 }
 
+/** Flip a room between shown (live) and hidden on the public site. */
+export async function toggleRoomPublished(formData: FormData) {
+  await requireSession();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+  const room = await prisma.room.findUnique({ where: { id }, select: { published: true } });
+  if (!room) return;
+  await prisma.room.update({ where: { id }, data: { published: !room.published } });
+  revalidatePath("/admin/visibility");
+  revalidatePath("/admin/rooms");
+  revalidatePath("/rooms");
+  revalidatePath("/");
+}
+
 export async function addRoomImage(formData: FormData) {
   await requireSession();
   const roomId = String(formData.get("roomId") ?? "");
