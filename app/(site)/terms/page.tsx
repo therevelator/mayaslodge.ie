@@ -36,9 +36,10 @@ export default async function TermsPage() {
 
       <h2>2. Prices</h2>
       <p>
-        Room prices are shown per room, per night, in euro (€), and include breakfast where
-        stated on the room. Prices are subject to change until your booking is confirmed.
-        Once we confirm your booking, the agreed price will not change.
+        Room prices are shown per room, per night, in euro (€), and do not include breakfast
+        (which is available on request for an additional charge). Prices are subject to change
+        until your booking is confirmed. Once we confirm your booking, the agreed price will not
+        change.
       </p>
 
       <h2>3. Payment</h2>
@@ -57,9 +58,8 @@ export default async function TermsPage() {
       <h2>5. Cancellations &amp; no-shows</h2>
       <p>
         If you need to cancel or change a confirmed booking, please contact us as soon as
-        possible. The specific cancellation terms that apply to your stay will be confirmed in
-        writing at the time of booking. Failure to arrive (a &ldquo;no-show&rdquo;) may be treated
-        as a late cancellation.
+        possible. Failure to arrive (a &ldquo;no-show&rdquo;) may be treated as a late
+        cancellation.
       </p>
 
       <h2>6. Your stay &amp; house rules</h2>

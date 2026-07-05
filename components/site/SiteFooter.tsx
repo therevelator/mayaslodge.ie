@@ -18,8 +18,7 @@ export function SiteFooter({ settings }: { settings: Setting }) {
         <div className="sm:col-span-2 lg:col-span-1">
           <Logo size={40} textClassName="text-lg text-white" href="/" />
           <p className="mt-4 max-w-xs text-sm text-cream/70">
-            {settings.tagline}. A family-run bed &amp; breakfast in the heart of{" "}
-            {settings.county || "Ireland"}.
+            {settings.tagline}. A family-run bed &amp; breakfast in Dublin, Ireland.
           </p>
         </div>
 

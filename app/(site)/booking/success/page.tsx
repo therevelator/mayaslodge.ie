@@ -17,9 +17,13 @@ export default async function BookingSuccessPage({
         Thank you — your request is in!
       </h1>
       <p className="mt-3 max-w-md text-ink/80">
-        We&rsquo;ve received your booking request and will be in touch by email
-        shortly to confirm your stay. Keep an eye on your inbox (and your spam
-        folder, just in case).
+        We&rsquo;ve received your booking request. Keep an eye on your inbox (and
+        your spam folder, just in case) — we&rsquo;ll email you shortly.
+      </p>
+      <p className="mt-4 max-w-md rounded-xl bg-orange/10 px-4 py-3 text-sm font-medium text-orange-dark">
+        Please note: this is a booking <strong>request</strong>, not a
+        confirmation. Your room is only reserved once we reply by email to
+        confirm it.
       </p>
       {ref && (
         <p className="mt-4 rounded-full bg-brand-light px-4 py-1.5 text-sm font-semibold text-brand-dark">

@@ -158,7 +158,8 @@ export function BookingWidget({
 
         <SubmitButton disabled={!ready} />
         <p className="text-center text-xs text-muted">
-          No payment now — we&rsquo;ll confirm your request by email.
+          This is a booking request, not a confirmation. No payment now — we&rsquo;ll
+          email you to confirm your stay.
         </p>
       </form>
     </div>

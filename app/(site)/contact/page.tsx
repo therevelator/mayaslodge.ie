@@ -100,6 +100,72 @@ export default async function ContactPage() {
           )}
         </div>
       </section>
+
+      {/* Getting here */}
+      <section className="container-page pb-16">
+        <div className="card p-8">
+          <h2 className="text-2xl font-semibold text-brand-dark">Getting here</h2>
+          <p className="mt-2 max-w-2xl text-ink/80">
+            Maya&rsquo;s Lodge enjoys one of the most convenient locations in Dublin
+            — only minutes from Dublin Airport and a short, direct route into the
+            city centre.
+          </p>
+
+          <div className="mt-6 grid gap-8 sm:grid-cols-2">
+            <div>
+              <h3 className="font-serif text-lg font-semibold text-brand-dark">By bus</h3>
+              <ul className="mt-3 space-y-3 text-sm text-ink/80">
+                <li className="flex gap-2">
+                  <Icon name="check" size={18} className="mt-0.5 shrink-0 text-brand" />
+                  <span>
+                    <strong>Arriving from Dublin Airport:</strong> take the bus
+                    toward Santry and get off at <strong>Shanvarna Road East
+                    (stop 231)</strong> — a short walk from the lodge.
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <Icon name="check" size={18} className="mt-0.5 shrink-0 text-brand" />
+                  <span>
+                    <strong>Heading to the airport or city centre:</strong> catch
+                    your bus on the <strong>Swords Road</strong>, a couple of
+                    minutes&rsquo; walk away.
+                  </span>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-serif text-lg font-semibold text-brand-dark">Directions &amp; parking</h3>
+              <p className="mt-3 text-sm text-ink/80">
+                For door-to-door directions, pop our Eircode{" "}
+                <strong>{settings.eircode || "D09 NY56"}</strong> into any sat-nav or
+                maps app — it brings you straight to our door.
+              </p>
+              <p className="mt-2 text-sm text-ink/80">
+                Free street parking nearby, subject to availability.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&origin=Dublin+Airport&destination=${mapsQuery}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-outline"
+                >
+                  Directions from the airport
+                </a>
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&origin=Dublin+City+Centre&destination=${mapsQuery}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-outline"
+                >
+                  Directions from the city centre
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </>
   );
 }

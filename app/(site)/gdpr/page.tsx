@@ -56,22 +56,6 @@ export default async function GdprPage() {
         verify your identity before acting on a request, to keep your data safe.
       </p>
 
-      <h2>Your right to complain</h2>
-      <p>
-        If you are unhappy with how we have handled your personal data, you have the right to
-        lodge a complaint with the Irish supervisory authority:
-      </p>
-      <p>
-        <strong>Data Protection Commission (DPC)</strong>
-        <br />
-        Website:{" "}
-        <a href="https://www.dataprotection.ie" target="_blank" rel="noopener noreferrer">
-          www.dataprotection.ie
-        </a>
-        <br />
-        21 Fitzwilliam Square South, Dublin 2, D02 RD28, Ireland.
-      </p>
-
       <h2>Updates</h2>
       <p>
         We may update this statement from time to time. The current version is always available

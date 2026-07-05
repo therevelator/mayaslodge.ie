@@ -105,7 +105,7 @@ export default async function HomePage() {
             <ul className="mt-4 space-y-3 text-sm text-ink/80">
               <li className="flex gap-2"><Icon name="breakfast" size={18} className="text-brand" /> {settings.breakfastInfo}</li>
               <li className="flex gap-2"><Icon name="check" size={18} className="text-brand" /> Check-in from {settings.checkInTime}, check-out by {settings.checkOutTime}.</li>
-              <li className="flex gap-2"><Icon name="parking" size={18} className="text-brand" /> Free on-site parking for all guests.</li>
+              <li className="flex gap-2"><Icon name="parking" size={18} className="text-brand" /> Free street parking nearby, subject to availability.</li>
             </ul>
           </div>
         </div>
@@ -114,7 +114,7 @@ export default async function HomePage() {
       {/* ---------------- CTA band ---------------- */}
       <section className="container-page mt-20">
         <div className="rounded-2xl bg-brand px-8 py-12 text-center text-white">
-          <h2 className="text-3xl font-semibold">Ready for a proper Irish welcome?</h2>
+          <h2 className="text-3xl font-semibold">Ready to book your stay?</h2>
           <p className="mx-auto mt-3 max-w-xl text-white/85">
             Browse our rooms, check the dates you&rsquo;d like and send us a request — we&rsquo;ll confirm by email.
           </p>
