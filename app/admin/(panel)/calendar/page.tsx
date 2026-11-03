@@ -3,7 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { monthLabel, nightsBetween, todayUTC, addDays } from "@/lib/dates";
 import { formatDate, formatDateShort, toISODate } from "@/lib/format";
 import { getOpenWindows, openDaySet } from "@/lib/availability";
-import { MonthGrid } from "@/components/admin/MonthGrid";
+import { PriceCalendar } from "@/components/admin/PriceCalendar";
+import { getCustomPrices } from "@/lib/pricing";
+import { getSettings } from "@/lib/settings";
 import { CalendarRoomPicker } from "@/components/admin/CalendarRoomPicker";
 import { AdminBookingRow } from "@/components/admin/AdminBookingRow";
 import { AddReservationForm } from "@/components/admin/AddReservationForm";
@@ -49,15 +51,26 @@ export default async function AdminCalendarPage({
   const windowStart = new Date(Date.UTC(year, month, 1));
   const windowEnd = new Date(Date.UTC(year, month + 2, 1));
 
-  const bookings = await prisma.booking.findMany({
-    where: {
-      roomId: selectedRoom.id,
-      status: { in: ["PENDING", "CONFIRMED"] },
-      checkIn: { lt: windowEnd },
-      checkOut: { gt: windowStart },
-    },
-    orderBy: { checkIn: "asc" },
-  });
+  // Everything below depends only on the room and the month, so load it in
+  // parallel (one database round trip instead of four).
+  const [bookings, viewWindows, customPrices, settings, futureWindows] = await Promise.all([
+    prisma.booking.findMany({
+      where: {
+        roomId: selectedRoom.id,
+        status: { in: ["PENDING", "CONFIRMED"] },
+        checkIn: { lt: windowEnd },
+        checkOut: { gt: windowStart },
+      },
+      orderBy: { checkIn: "asc" },
+    }),
+    getOpenWindows(selectedRoom.id, windowStart, windowEnd),
+    getCustomPrices(selectedRoom.id, windowStart, windowEnd),
+    getSettings(),
+    prisma.availabilityWindow.findMany({
+      where: { roomId: selectedRoom.id, end: { gt: todayUTC() } },
+      orderBy: { start: "asc" },
+    }),
+  ]);
 
   const calBookings = bookings.map((b) => ({
     id: b.id,
@@ -70,13 +83,8 @@ export default async function AdminCalendarPage({
 
   // Open availability: the set shown on the grid + the full future list managed
   // in the "Open dates" card.
-  const viewWindows = await getOpenWindows(selectedRoom.id, windowStart, windowEnd);
-  const openDays = openDaySet(viewWindows);
+  const openDays = Array.from(openDaySet(viewWindows));
 
-  const futureWindows = await prisma.availabilityWindow.findMany({
-    where: { roomId: selectedRoom.id, end: { gt: todayUTC() } },
-    orderBy: { start: "asc" },
-  });
   const windowList = futureWindows.map((w) => ({
     id: w.id,
     label: `${formatDateShort(w.start)} – ${formatDateShort(addDays(w.end, -1))}`,
@@ -110,26 +118,20 @@ export default async function AdminCalendarPage({
         <Link href={`/admin/calendar?room=${selectedRoom.id}&month=${currentMonth}`} className="btn btn-outline px-3 py-1.5 text-sm">Today</Link>
       </div>
 
-      {/* Calendar — same month-grid look as the guest room page */}
-      <div className="card p-5 sm:p-6">
-        <div className="flex flex-col gap-8 sm:flex-row">
-          <MonthGrid year={year} month={month} bookings={calBookings} openDays={openDays} todayISO={todayISO} />
-          <MonthGrid
-            year={month === 11 ? year + 1 : year}
-            month={(month + 1) % 12}
-            bookings={calBookings}
-            openDays={openDays}
-            todayISO={todayISO}
-          />
-        </div>
-        <div className="mt-5 flex flex-wrap gap-4 border-t border-brand/10 pt-4 text-xs text-muted">
-          <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-brand" /> Confirmed</span>
-          <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-orange" /> Pending</span>
-          <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-charcoal" /> Blocked</span>
-          <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded border border-brand/15 bg-cream-deep/70" /> Closed</span>
-          <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded border border-brand/15 bg-white" /> Open</span>
-        </div>
-      </div>
+      {/* Calendar — select days to set custom nightly prices */}
+      <PriceCalendar
+        roomId={selectedRoom.id}
+        months={[
+          { year, month },
+          { year: month === 11 ? year + 1 : year, month: (month + 1) % 12 },
+        ]}
+        bookings={calBookings}
+        openDays={openDays}
+        todayISO={todayISO}
+        prices={customPrices}
+        basePrice={selectedRoom.basePrice}
+        currency={settings.currency}
+      />
 
       {/* Open dates — the primary availability control */}
       <section className="card p-6">

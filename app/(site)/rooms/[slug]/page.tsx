@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/settings";
 import { getBlockingStays, occupiedDaySet, getOpenWindows, openDaySet } from "@/lib/availability";
 import { addDays, todayUTC } from "@/lib/dates";
+import { getCustomPrices } from "@/lib/pricing";
 import { toISODate } from "@/lib/format";
 import { Gallery } from "@/components/site/Gallery";
 import { BookingWidget } from "@/components/site/BookingWidget";
@@ -59,9 +60,10 @@ export default async function RoomDetailPage({
 
   const from = todayUTC();
   const to = addDays(from, 365);
-  const [stays, windows] = await Promise.all([
+  const [stays, windows, customPrices] = await Promise.all([
     getBlockingStays(room.id, from, to),
     getOpenWindows(room.id, from, to),
+    getCustomPrices(room.id, from, to),
   ]);
   // Bookable = open days minus occupied days. Rooms are closed by default, so
   // an unopened room has no bookable dates.
@@ -126,6 +128,7 @@ export default async function RoomDetailPage({
           <BookingWidget
             roomId={room.id}
             basePrice={room.basePrice}
+            customPrices={customPrices}
             currency={settings.currency}
             maxGuests={room.maxGuests}
             available={available}

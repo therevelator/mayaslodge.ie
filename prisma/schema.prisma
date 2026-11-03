@@ -41,6 +41,7 @@ model Room {
   beds        Bed[]
   bookings    Booking[]
   availability AvailabilityWindow[]
+  prices      RoomPrice[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 }
@@ -53,6 +54,19 @@ model Bed {
   type      String // "Single", "Double", "King", etc.
   quantity  Int    @default(1)
   sortOrder Int    @default(0)
+}
+
+// A custom nightly price for one specific night. Nights without a row use the
+// room's basePrice.
+model RoomPrice {
+  id     String   @id @default(cuid())
+  roomId String
+  room   Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  date   DateTime // UTC midnight of the night (the guest sleeps this night)
+  price  Int // euro-cents
+
+  @@unique([roomId, date])
+  @@index([roomId, date])
 }
 
 // A date range during which a room is OPEN for online booking. Rooms are closed

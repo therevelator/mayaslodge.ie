@@ -13,6 +13,7 @@ import {
 import { parsePriceToCents } from "@/lib/format";
 import { dateFromISO, nightsBetween } from "@/lib/dates";
 import { isRoomAvailable } from "@/lib/availability";
+import { stayTotal } from "@/lib/pricing";
 import {
   BOOKING_STATUSES,
   BED_TYPES,
@@ -164,7 +165,7 @@ export async function createManualBooking(
       guests: d.guests,
       message: d.message || null,
       nights,
-      totalPrice: room ? room.basePrice * nights : null,
+      totalPrice: room ? await stayTotal(room, checkIn, checkOut) : null,
       status: "CONFIRMED",
       source: d.source,
     },
@@ -224,7 +225,7 @@ export async function updateBooking(
       guests: d.guests,
       message: d.message || null,
       nights,
-      totalPrice: d.source === "BLOCK" || !room ? null : room.basePrice * nights,
+      totalPrice: d.source === "BLOCK" || !room ? null : await stayTotal(room, checkIn, checkOut),
       status: d.status,
       source: d.source,
     },
@@ -267,6 +268,65 @@ export async function openDates(
   });
   revalidatePath("/admin/calendar");
   revalidatePath("/rooms");
+  return { ok: true };
+}
+
+// --------------------------------------------------------------------------
+// Custom nightly prices (override the room's standard price on chosen nights)
+// --------------------------------------------------------------------------
+
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+const MAX_PRICE_DAYS = 400;
+
+export type DayPriceState = { error?: string; ok?: boolean };
+
+function cleanDates(dates: unknown): string[] | null {
+  if (!Array.isArray(dates) || dates.length === 0 || dates.length > MAX_PRICE_DAYS) return null;
+  const list = Array.from(new Set(dates.map(String)));
+  return list.every((d) => ISO_DAY.test(d)) ? list : null;
+}
+
+/** Set a custom price (e.g. "120" or "120.50" euros) on the given nights. */
+export async function setDayPrices(
+  roomId: string,
+  dates: string[],
+  price: string
+): Promise<DayPriceState> {
+  await requireSession();
+  const days = cleanDates(dates);
+  if (!roomId || !days) return { error: "Select one or more days first." };
+  const cents = parsePriceToCents(price);
+  if (cents <= 0) return { error: "Enter a price per night." };
+  if (cents > 10_000_00) return { error: "That price looks too high." };
+
+  const room = await prisma.room.findUnique({ where: { id: roomId }, select: { id: true } });
+  if (!room) return { error: "Room not found." };
+
+  await prisma.$transaction(
+    days.map((iso) => {
+      const date = dateFromISO(iso);
+      return prisma.roomPrice.upsert({
+        where: { roomId_date: { roomId, date } },
+        update: { price: cents },
+        create: { roomId, date, price: cents },
+      });
+    })
+  );
+  revalidatePath("/admin/calendar");
+  revalidatePath("/rooms", "layout");
+  return { ok: true };
+}
+
+/** Remove custom prices so the nights go back to the room's standard price. */
+export async function clearDayPrices(roomId: string, dates: string[]): Promise<DayPriceState> {
+  await requireSession();
+  const days = cleanDates(dates);
+  if (!roomId || !days) return { error: "Select one or more days first." };
+  await prisma.roomPrice.deleteMany({
+    where: { roomId, date: { in: days.map(dateFromISO) } },
+  });
+  revalidatePath("/admin/calendar");
+  revalidatePath("/rooms", "layout");
   return { ok: true };
 }
 

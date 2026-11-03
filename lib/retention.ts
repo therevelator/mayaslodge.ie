@@ -9,7 +9,12 @@ import { prisma } from "./prisma";
  * Runs lazily whenever the owner opens the admin area, so no external cron is
  * required for a regularly-used dashboard. Safe to call often (idempotent).
  */
+const PURGE_EVERY_MS = 60 * 60 * 1000;
+let lastPurge = 0;
+
 export async function purgeExpiredMeta(): Promise<number> {
+  if (Date.now() - lastPurge < PURGE_EVERY_MS) return 0;
+  lastPurge = Date.now();
   const setting = await prisma.setting.findUnique({
     where: { id: 1 },
     select: { metaRetentionDays: true },

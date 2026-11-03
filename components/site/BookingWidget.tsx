@@ -23,6 +23,7 @@ function SubmitButton({ disabled }: { disabled: boolean }) {
 export function BookingWidget({
   roomId,
   basePrice,
+  customPrices,
   currency,
   maxGuests,
   available,
@@ -31,6 +32,7 @@ export function BookingWidget({
 }: {
   roomId: string;
   basePrice: number;
+  customPrices: Record<string, number>;
   currency: string;
   maxGuests: number;
   available: string[];
@@ -45,7 +47,19 @@ export function BookingWidget({
   );
 
   const nights = checkIn && checkOut ? nightsBetween(checkIn, checkOut) : 0;
-  const total = nights * basePrice;
+  // Each night costs its custom price if the owner set one, otherwise the
+  // standard price. Nights are the days from check-in up to (not incl.) check-out.
+  const nightPrices: number[] = [];
+  if (checkIn && checkOut) {
+    const d = new Date(`${checkIn}T00:00:00Z`);
+    const end = new Date(`${checkOut}T00:00:00Z`);
+    while (d < end) {
+      nightPrices.push(customPrices[d.toISOString().slice(0, 10)] ?? basePrice);
+      d.setUTCDate(d.getUTCDate() + 1);
+    }
+  }
+  const total = nightPrices.reduce((sum, p) => sum + p, 0);
+  const samePrice = nightPrices.length > 0 && nightPrices.every((p) => p === nightPrices[0]);
   const ready = Boolean(checkIn && checkOut);
 
   const fmt = (s: string) =>
@@ -100,7 +114,9 @@ export function BookingWidget({
             </div>
             <div className="mt-2 flex justify-between border-t border-brand/10 pt-2">
               <span className="text-muted">
-                {formatPrice(basePrice, currency)} × {nights} night{nights > 1 ? "s" : ""}
+                {samePrice
+                  ? `${formatPrice(nightPrices[0], currency)} × ${nights} night${nights > 1 ? "s" : ""}`
+                  : `${nights} nights (price varies by date)`}
               </span>
               <span className="font-semibold">{formatPrice(total, currency)}</span>
             </div>

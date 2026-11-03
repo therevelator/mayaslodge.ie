@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { addRoomImage, deleteRoomImage } from "@/app/admin/actions";
 
 type Img = { id: string; url: string; alt: string | null };
@@ -14,7 +13,6 @@ export function ImageManager({
   roomId: string;
   images: Img[];
 }) {
-  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -38,7 +36,6 @@ export function ImageManager({
         await addRoomImage(add);
       }
       if (inputRef.current) inputRef.current.value = "";
-      router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed");
     } finally {
@@ -51,7 +48,6 @@ export function ImageManager({
     fd.append("id", id);
     fd.append("roomId", roomId);
     await deleteRoomImage(fd);
-    router.refresh();
   }
 
   return (
