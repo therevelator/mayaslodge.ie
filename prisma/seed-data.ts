@@ -113,13 +113,13 @@ export const ROOMS: RoomSeed[] = [
 
 export const SETTINGS_DEFAULTS = {
   propertyName: "Maya's Lodge",
-  tagline: "A warm Irish welcome",
-  heroHeadline: "Your home away from home in Dublin",
+  tagline: "Santry, Dublin — by the airport",
+  heroHeadline: "Minutes from Dublin Airport, close to the city centre",
   heroSubline:
-    "A family-run bed & breakfast in Santry, just minutes from Dublin Airport and the city — cosy rooms and a proper Irish welcome.",
-  aboutTitle: "Welcome to Maya's Lodge",
+    "Maya's Lodge is a bed & breakfast in Santry, Dublin — only minutes from Dublin Airport and a short ride from the city centre. A practical, comfortable base whether you're catching an early flight, stopping over, or exploring Dublin.",
+  aboutTitle: "About Maya's Lodge",
   aboutBody:
-    "Tucked away in Santry on Dublin's northside, Maya's Lodge is a small family-run bed & breakfast where every guest is treated like one of our own. We're ideally placed — only minutes from Dublin Airport, a short hop to the city centre, and close to the coast at Clontarf and Howth. Our individually styled rooms blend traditional Irish charm with the comforts you need for a restful stay.",
+    "Maya's Lodge is a bed & breakfast in Santry, Dublin, chosen for its location. Dublin Airport is just minutes away — handy for early flights, late arrivals and stopovers — and frequent buses on the Swords Road run straight into the city centre and O'Connell Street. From there, Trinity College, Temple Bar, Dublin Castle, the Guinness Storehouse and Grafton Street are all within easy reach, with Croke Park, the 3Arena and the coast at Clontarf and Howth a short trip away. The M50 motorway is close by, so the rest of Ireland is easy to get to as well.",
   breakfastInfo:
     "A full Irish breakfast is available on request for €10 per person, per day, served fresh each morning. Vegetarian, vegan and gluten-free options are always available — just let us know.",
   addressLine: "37 Shanrath Road",

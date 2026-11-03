@@ -55,9 +55,9 @@ export default async function HomePage() {
       {/* ---------------- Highlights ---------------- */}
       <section className="container-page -mt-10 relative grid gap-4 sm:grid-cols-3">
         {[
-          { icon: "breakfast", title: "Full Irish breakfast", body: "Cooked fresh each morning, available on request for €10 per person, per day." },
-          { icon: "family", title: "Family-run welcome", body: "Cosy rooms and the warm hospitality of a real Irish home." },
-          { icon: "wave", title: "Perfectly placed", body: "Minutes from Dublin Airport and the city centre, with the coast close by." },
+          { icon: "plane", title: "Minutes from Dublin Airport", body: "Just minutes from the terminals — ideal for early flights, late arrivals and stopovers." },
+          { icon: "bus", title: "Straight into the city", body: "Frequent buses to O'Connell Street, Trinity College, Temple Bar and the Guinness Storehouse." },
+          { icon: "map", title: "Well connected", body: "Close to the M50, Croke Park, the 3Arena and the coast at Howth and Clontarf." },
         ].map((f) => (
           <div key={f.title} className="card p-6">
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-brand-light text-brand">

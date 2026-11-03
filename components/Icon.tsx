@@ -138,6 +138,25 @@ const paths: Record<string, React.ReactNode> = {
     </>
   ),
   check: <path d="M5 12l5 5L20 7" />,
+  plane: (
+    <>
+      <path d="M21 4 10.5 14.5" />
+      <path d="M21 4 14.5 21l-4-6.5-6.5-4L21 4z" />
+    </>
+  ),
+  bus: (
+    <>
+      <rect x="4" y="4" width="16" height="13" rx="2" />
+      <path d="M4 11h16M7.5 17v2.5M16.5 17v2.5" />
+      <path d="M8 14h.01M16 14h.01" />
+    </>
+  ),
+  map: (
+    <>
+      <path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z" />
+      <path d="M9 4v14M15 6v14" />
+    </>
+  ),
 };
 
 export function Icon({
