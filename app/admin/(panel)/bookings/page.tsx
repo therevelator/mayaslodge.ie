@@ -25,7 +25,6 @@ export default async function AdminBookingsPage({
   searchParams: Promise<{ status?: string }>;
 }) {
   const { status = "ALL" } = await searchParams;
-  const settings = await getSettings();
   const today = todayUTC();
 
   const where: Prisma.BookingWhereInput =
@@ -39,11 +38,14 @@ export default async function AdminBookingsPage({
             ? { status }
             : {};
 
-  const bookings = await prisma.booking.findMany({
-    where,
-    orderBy: { checkIn: "asc" },
-    include: { room: true },
-  });
+  const [settings, bookings] = await Promise.all([
+    getSettings(),
+    prisma.booking.findMany({
+      where,
+      orderBy: { checkIn: "asc" },
+      include: { room: true },
+    }),
+  ]);
 
   return (
     <div className="space-y-6">

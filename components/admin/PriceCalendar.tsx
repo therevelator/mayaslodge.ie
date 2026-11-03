@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { MonthGrid, type CalBooking } from "./MonthGrid";
 import { setDayPrices, clearDayPrices } from "@/app/admin/actions";
 import { formatPrice } from "@/lib/format";
@@ -52,7 +51,6 @@ export function PriceCalendar({
   basePrice: number;
   currency: string;
 }) {
-  const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [anchor, setAnchor] = useState<string | null>(null);
   const [rangeMode, setRangeMode] = useState(false);
@@ -108,7 +106,6 @@ export function PriceCalendar({
             : `${dates.length} night${dates.length > 1 ? "s" : ""} back to the standard price.`,
       });
       clearSelection();
-      router.refresh();
     });
   }
 

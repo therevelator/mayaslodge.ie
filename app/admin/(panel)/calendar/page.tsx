@@ -51,15 +51,26 @@ export default async function AdminCalendarPage({
   const windowStart = new Date(Date.UTC(year, month, 1));
   const windowEnd = new Date(Date.UTC(year, month + 2, 1));
 
-  const bookings = await prisma.booking.findMany({
-    where: {
-      roomId: selectedRoom.id,
-      status: { in: ["PENDING", "CONFIRMED"] },
-      checkIn: { lt: windowEnd },
-      checkOut: { gt: windowStart },
-    },
-    orderBy: { checkIn: "asc" },
-  });
+  // Everything below depends only on the room and the month, so load it in
+  // parallel (one database round trip instead of four).
+  const [bookings, viewWindows, customPrices, settings, futureWindows] = await Promise.all([
+    prisma.booking.findMany({
+      where: {
+        roomId: selectedRoom.id,
+        status: { in: ["PENDING", "CONFIRMED"] },
+        checkIn: { lt: windowEnd },
+        checkOut: { gt: windowStart },
+      },
+      orderBy: { checkIn: "asc" },
+    }),
+    getOpenWindows(selectedRoom.id, windowStart, windowEnd),
+    getCustomPrices(selectedRoom.id, windowStart, windowEnd),
+    getSettings(),
+    prisma.availabilityWindow.findMany({
+      where: { roomId: selectedRoom.id, end: { gt: todayUTC() } },
+      orderBy: { start: "asc" },
+    }),
+  ]);
 
   const calBookings = bookings.map((b) => ({
     id: b.id,
@@ -72,17 +83,8 @@ export default async function AdminCalendarPage({
 
   // Open availability: the set shown on the grid + the full future list managed
   // in the "Open dates" card.
-  const [viewWindows, customPrices, settings] = await Promise.all([
-    getOpenWindows(selectedRoom.id, windowStart, windowEnd),
-    getCustomPrices(selectedRoom.id, windowStart, windowEnd),
-    getSettings(),
-  ]);
   const openDays = Array.from(openDaySet(viewWindows));
 
-  const futureWindows = await prisma.availabilityWindow.findMany({
-    where: { roomId: selectedRoom.id, end: { gt: todayUTC() } },
-    orderBy: { start: "asc" },
-  });
   const windowList = futureWindows.map((w) => ({
     id: w.id,
     label: `${formatDateShort(w.start)} – ${formatDateShort(addDays(w.end, -1))}`,

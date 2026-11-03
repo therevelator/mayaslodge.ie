@@ -2,7 +2,6 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { useRouter } from "next/navigation";
 import { StatusBadge, SourceBadge } from "@/components/admin/StatusBadge";
 import { BookingMeta, type BookingMetaData } from "@/components/admin/BookingMeta";
 import {
@@ -45,16 +44,14 @@ export function AdminBookingRow({
   booking: RowBooking;
   rooms: { id: string; name: string }[];
 }) {
-  const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [state, formAction] = useActionState<ManualBookingState, FormData>(updateBooking, {});
 
   useEffect(() => {
     if (state.ok) {
       setEditing(false);
-      router.refresh();
     }
-  }, [state.ok, router]);
+  }, [state.ok]);
 
   if (editing) {
     return (

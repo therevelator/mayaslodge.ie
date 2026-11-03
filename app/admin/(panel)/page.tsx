@@ -8,11 +8,11 @@ import { BookingMeta } from "@/components/admin/BookingMeta";
 import { setBookingStatus } from "@/app/admin/actions";
 
 export default async function AdminDashboard() {
-  const settings = await getSettings();
   const today = todayUTC();
   const weekAhead = addDays(today, 7);
 
-  const [pending, upcomingArrivals, roomCount, confirmedFuture] = await Promise.all([
+  const [settings, pending, upcomingArrivals, roomCount, confirmedFuture] = await Promise.all([
+    getSettings(),
     prisma.booking.findMany({
       where: { status: "PENDING" },
       orderBy: { createdAt: "desc" },

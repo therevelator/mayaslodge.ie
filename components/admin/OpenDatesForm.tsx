@@ -2,7 +2,6 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
-import { useRouter } from "next/navigation";
 import { openDates, deleteAvailabilityWindow, type OpenDatesState } from "@/app/admin/actions";
 
 function OpenButton() {
@@ -23,22 +22,19 @@ export function OpenDatesForm({
   roomName: string;
   windows: { id: string; label: string }[];
 }) {
-  const router = useRouter();
   const [state, formAction] = useActionState<OpenDatesState, FormData>(openDates, {});
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (state.ok) {
       formRef.current?.reset();
-      router.refresh();
     }
-  }, [state.ok, router]);
+  }, [state.ok]);
 
   async function remove(id: string) {
     const fd = new FormData();
     fd.append("id", id);
     await deleteAvailabilityWindow(fd);
-    router.refresh();
   }
 
   return (
