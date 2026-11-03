@@ -1,0 +1,15 @@
+# Netlify deploy config for mayaslodge.ie
+# Netlify detects Next.js automatically and runs it with its Next.js runtime.
+
+[build]
+  # prisma generate  -> builds the database client
+  # prisma db push   -> creates/updates the tables in Postgres
+  # bootstrap        -> first deploy only: admin user, settings, starter rooms
+  command = "npm run netlify:build"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  # Make sure the Prisma query engine ships with the server functions.
+  included_files = ["node_modules/.prisma/client/**", "node_modules/@prisma/client/**"]

@@ -31,7 +31,7 @@ Built with **Next.js (App Router) + TypeScript + Tailwind CSS + Prisma**.
 
 ```bash
 npm install
-npm run db:migrate      # create the SQLite database
+npm run db:migrate      # create the tables in your Postgres database (set DATABASE_URL/DIRECT_URL in .env)
 npm run db:seed         # add 6 demo rooms, amenities, settings, sample bookings
 npm run dev             # http://localhost:3000
 ```
@@ -74,22 +74,29 @@ Created by the seed script from `.env`:
 
 ---
 
-## Notes for going live
+## Deploying (Netlify)
 
-- **Database:** dev uses SQLite (`prisma/schema.prisma`, `provider = "sqlite"`).
-  For production, switch the provider to `postgresql` and set `DATABASE_URL`.
-- **Secrets:** set a strong `AUTH_SECRET` (`openssl rand -hex 32`) and a real
-  admin password in the host's environment.
-- **Uploaded photos:** in dev they're written to `public/uploads`. On hosts
-  with an ephemeral/read-only filesystem (e.g. Vercel), move uploads to object
-  storage (S3, Cloudflare R2, etc.) — only `app/api/admin/upload/route.ts`
-  needs to change.
-- **Booking.com sync:** intentionally not built yet, but the data model is
-  ready for it (`Booking.source` already supports `BOOKING_COM`, and the
-  calendar treats it as blocking). Booking.com supports iCal import/export, so
-  two-way sync can be added later without schema changes.
-- **Multi-language:** the site is English-only today. Text is centralised
-  (settings + content) so translations can be layered on later.
+Hosted on **Netlify**; the domain and DNS stay at Blacknight.
+
+1. Create a Postgres database (e.g. Neon) and copy its pooled and direct
+   connection strings.
+2. In Netlify: *Add new site → Import from GitHub* → this repo. Netlify reads
+   `netlify.toml`, so no build settings are needed.
+3. In *Site configuration → Environment variables* add: `DATABASE_URL`,
+   `DIRECT_URL`, `AUTH_SECRET` (`openssl rand -hex 32`), `ADMIN_EMAIL`,
+   `ADMIN_PASSWORD`, `ADMIN_NAME`, `NEXT_PUBLIC_SITE_URL=https://mayaslodge.ie`.
+4. Deploy. Every build runs `prisma db push` (keeps tables in sync with the
+   schema) and the first build runs the bootstrap (admin user, settings, six
+   starter rooms — hidden until you publish them).
+5. *Domain management → Add domain* `mayaslodge.ie`, then at Blacknight set the
+   DNS records Netlify shows (A record for the apex, CNAME for `www`).
+
+Uploaded room photos are stored in **Netlify Blobs** on Netlify (and in
+`public/uploads` locally); URLs are `/uploads/<file>` in both cases.
+
+**Booking.com sync:** intentionally not built yet, but the data model is
+ready for it (`Booking.source` already supports `BOOKING_COM`). Booking.com
+supports iCal import/export, so two-way sync can be added later.
 
 ---
 

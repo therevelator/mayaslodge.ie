@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { getSession } from "@/lib/auth";
+import { saveUpload, usesBlobStorage } from "@/lib/uploads";
 
 const ALLOWED = new Map<string, string>([
   ["image/jpeg", "jpg"],
@@ -35,9 +36,17 @@ export async function POST(req: Request) {
 
   const bytes = Buffer.from(await file.arrayBuffer());
   const name = `${Date.now()}-${randomBytes(6).toString("hex")}.${ext}`;
-  const dir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, name), bytes);
+
+  if (usesBlobStorage()) {
+    // Netlify: the filesystem is read-only, so photos go to Netlify Blobs and
+    // are served back by app/uploads/[name]/route.ts at the same URL.
+    await saveUpload(name, bytes, file.type);
+  } else {
+    // Local dev: write straight into public/uploads.
+    const dir = path.join(process.cwd(), "public", "uploads");
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, name), bytes);
+  }
 
   return NextResponse.json({ url: `/uploads/${name}` });
 }
