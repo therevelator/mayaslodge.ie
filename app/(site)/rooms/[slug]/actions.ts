@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { isRoomAvailable, isRangeOpen } from "@/lib/availability";
 import { dateFromISO, nightsBetween, todayUTC } from "@/lib/dates";
 import { captureRequestMeta } from "@/lib/request-meta";
+import { stayTotal } from "@/lib/pricing";
 
 // All guest fields are required.
 const schema = z.object({
@@ -88,7 +89,7 @@ export async function requestBooking(
       guests: data.guests,
       message: data.message,
       nights,
-      totalPrice: room.basePrice * nights,
+      totalPrice: await stayTotal(room, checkIn, checkOut),
       status: "PENDING",
       source: "WEBSITE",
       ...meta,
