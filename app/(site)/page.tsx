@@ -55,9 +55,9 @@ export default async function HomePage() {
       {/* ---------------- Highlights ---------------- */}
       <section className="container-page -mt-10 relative grid gap-4 sm:grid-cols-3">
         {[
-          { icon: "plane", title: "Minutes from Dublin Airport", body: "Just minutes from the terminals — ideal for early flights, late arrivals and stopovers." },
-          { icon: "bus", title: "Straight into the city", body: "Frequent buses to O'Connell Street, Trinity College, Temple Bar and the Guinness Storehouse." },
-          { icon: "map", title: "Well connected", body: "Close to the M50, Croke Park, the 3Arena and the coast at Howth and Clontarf." },
+          { icon: "plane", title: "Dublin Airport", body: "About 10–15 minutes by car or taxi to Terminals 1 and 2." },
+          { icon: "bus", title: "City centre", body: "About 5 km to O'Connell Street, with buses into the centre a short walk away. Croke Park is about 3 km." },
+          { icon: "map", title: "DCU & Beaumont", body: "Dublin City University is under 1 km away. Beaumont Hospital is about 5 minutes by car." },
         ].map((f) => (
           <div key={f.title} className="card p-6">
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-brand-light text-brand">
@@ -114,9 +114,9 @@ export default async function HomePage() {
       {/* ---------------- CTA band ---------------- */}
       <section className="container-page mt-20">
         <div className="rounded-2xl bg-brand px-8 py-12 text-center text-white">
-          <h2 className="text-3xl font-semibold">Ready to book your stay?</h2>
+          <h2 className="text-3xl font-semibold">Ready to book?</h2>
           <p className="mx-auto mt-3 max-w-xl text-white/85">
-            Browse our rooms, check the dates you&rsquo;d like and send us a request — we&rsquo;ll confirm by email.
+            Choose a room, pick your dates and send a request. We&rsquo;ll confirm by email.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link href="/rooms" className="btn btn-accent">Check availability</Link>
