@@ -40,6 +40,7 @@ export function MonthGrid({
   openDays,
   todayISO,
   prices,
+  basePrice,
   currency = "EUR",
   selected,
   onDayClick,
@@ -50,6 +51,7 @@ export function MonthGrid({
   openDays: Set<string>;
   todayISO: string;
   prices?: Record<string, number>;
+  basePrice?: number;
   currency?: string;
   selected?: Set<string>;
   onDayClick?: (iso: string, shiftKey: boolean) => void;
@@ -80,6 +82,8 @@ export function MonthGrid({
           const booking = bookings.find((b) => dayInStay(day, b.checkIn, b.checkOut));
           const past = iso < todayISO;
           const custom = prices?.[iso];
+          // Price shown on the day: the custom one if set, else the standard one.
+          const shownPrice = past ? undefined : (custom ?? basePrice);
           const isSelected = selected?.has(iso) ?? false;
           const clickable = Boolean(onDayClick) && !past;
           const isStart =
@@ -109,13 +113,19 @@ export function MonthGrid({
                 <span className="mt-0.5 max-w-full truncate px-1 text-[0.55rem] leading-tight">
                   {booking.guestName.split(" ")[0]}
                 </span>
-              ) : custom !== undefined ? (
+              ) : shownPrice !== undefined ? (
                 <span
-                  className={`mt-0.5 max-w-full truncate px-0.5 text-[0.6rem] font-semibold leading-tight ${
-                    booking ? "text-white" : "text-orange-dark"
+                  className={`mt-0.5 max-w-full truncate px-0.5 text-[0.6rem] leading-tight ${
+                    custom !== undefined
+                      ? booking
+                        ? "font-semibold text-white"
+                        : "font-semibold text-orange-dark"
+                      : booking
+                        ? "text-white/70"
+                        : "text-ink/40"
                   }`}
                 >
-                  {formatPrice(custom, currency)}
+                  {formatPrice(shownPrice, currency)}
                 </span>
               ) : null}
             </>

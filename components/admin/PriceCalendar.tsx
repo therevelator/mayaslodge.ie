@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useOptimistic, useState, useTransition } from "react";
 import { MonthGrid, type CalBooking } from "./MonthGrid";
 import { setDayPrices, clearDayPrices } from "@/app/admin/actions";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, parsePriceToCents } from "@/lib/format";
 
 // The admin room calendar: two months side by side. The owner can select one
 // or more days and give those nights a custom price, or reset them to the
@@ -58,6 +58,20 @@ export function PriceCalendar({
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
 
+  // Show saved prices instantly; the server confirms in the background and the
+  // real data replaces this when it arrives (or it rolls back on error).
+  const [shownPrices, applyLocal] = useOptimistic(
+    prices,
+    (current, change: { dates: string[]; cents: number | null }) => {
+      const next = { ...current };
+      for (const d of change.dates) {
+        if (change.cents === null) delete next[d];
+        else next[d] = change.cents;
+      }
+      return next;
+    }
+  );
+
   const openSet = useMemo(() => new Set(openDays), [openDays]);
   const sorted = useMemo(() => Array.from(selected).sort(), [selected]);
 
@@ -75,7 +89,7 @@ export function PriceCalendar({
     setSelected(next);
 
     // Pre-fill the price box when every selected night has the same custom price.
-    const values = Array.from(next).map((d) => prices[d]);
+    const values = Array.from(next).map((d) => shownPrices[d]);
     if (values.length && values.every((v) => v !== undefined && v === values[0])) {
       setPrice(String(values[0]! / 100));
     }
@@ -89,7 +103,12 @@ export function PriceCalendar({
 
   function apply(kind: "set" | "reset") {
     const dates = sorted;
+    const cents = kind === "set" ? parsePriceToCents(price) : null;
     startTransition(async () => {
+      if (kind === "reset" || (cents && cents > 0)) {
+        applyLocal({ dates, cents });
+        clearSelection();
+      }
       const res =
         kind === "set"
           ? await setDayPrices(roomId, dates, price)
@@ -105,11 +124,10 @@ export function PriceCalendar({
             ? `Price saved for ${dates.length} night${dates.length > 1 ? "s" : ""}.`
             : `${dates.length} night${dates.length > 1 ? "s" : ""} back to the standard price.`,
       });
-      clearSelection();
     });
   }
 
-  const customCount = sorted.filter((d) => prices[d] !== undefined).length;
+  const customCount = sorted.filter((d) => shownPrices[d] !== undefined).length;
 
   return (
     <div className="card p-5 sm:p-6">
@@ -139,7 +157,8 @@ export function PriceCalendar({
             bookings={bookings}
             openDays={openSet}
             todayISO={todayISO}
-            prices={prices}
+            prices={shownPrices}
+            basePrice={basePrice}
             currency={currency}
             selected={selected}
             onDayClick={onDayClick}
@@ -154,6 +173,7 @@ export function PriceCalendar({
         <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded border border-brand/15 bg-cream-deep/70" /> Closed</span>
         <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded border border-brand/15 bg-white" /> Open</span>
         <span className="flex items-center gap-1.5"><span className="font-semibold text-orange-dark">€</span> Custom price</span>
+        <span className="flex items-center gap-1.5"><span className="text-ink/40">€</span> Standard price</span>
       </div>
 
       {/* Price panel */}

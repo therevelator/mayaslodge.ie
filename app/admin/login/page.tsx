@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { Logo } from "@/components/Logo";
@@ -28,7 +29,7 @@ export default async function AdminLoginPage({
           <LoginForm next={next ?? "/admin"} />
         </div>
         <p className="mt-4 text-center text-xs text-muted">
-          ← <a href="/" className="hover:text-brand">Back to the website</a>
+          ← <Link href="/" className="hover:text-brand">Back to the website</Link>
         </p>
       </div>
     </div>

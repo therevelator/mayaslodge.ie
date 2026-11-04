@@ -10,6 +10,7 @@ import {
   updateBooking,
   type ManualBookingState,
 } from "@/app/admin/actions";
+import { SubmitButton } from "@/components/admin/SubmitButton";
 
 export type RowBooking = {
   id: string;
@@ -158,7 +159,7 @@ export function AdminBookingRow({
         <button type="button" onClick={() => setEditing(true)} className="btn btn-outline px-3 py-1.5 text-sm">Edit</button>
         <form action={deleteBooking}>
           <input type="hidden" name="id" value={booking.id} />
-          <button className="btn btn-ghost px-3 py-1.5 text-sm text-orange-dark">Delete</button>
+          <SubmitButton className="btn btn-ghost px-3 py-1.5 text-sm text-orange-dark">Delete</SubmitButton>
         </form>
       </div>
     </div>
@@ -174,7 +175,7 @@ function StatusForm({
     <form action={setBookingStatus}>
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="status" value={status} />
-      <button className={`btn btn-${variant} px-3 py-1.5 text-sm`}>{label}</button>
+      <SubmitButton className={`btn btn-${variant} px-3 py-1.5 text-sm`}>{label}</SubmitButton>
     </form>
   );
 }

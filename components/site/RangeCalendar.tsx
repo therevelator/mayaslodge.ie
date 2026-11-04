@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { formatPrice } from "@/lib/format";
 
 // Week starts on Monday (Ireland).
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -30,6 +31,10 @@ export type RangeCalendarProps = {
   checkOut: string | null;
   onSelect: (checkIn: string | null, checkOut: string | null) => void;
   months?: number;
+  /** Nightly price shown under bookable days (custom prices override base). */
+  basePrice?: number;
+  customPrices?: Record<string, number>;
+  currency?: string;
 };
 
 export function RangeCalendar({
@@ -39,6 +44,9 @@ export function RangeCalendar({
   checkOut,
   onSelect,
   months = 2,
+  basePrice,
+  customPrices = {},
+  currency = "EUR",
 }: RangeCalendarProps) {
   const availableSet = useMemo(() => new Set(available), [available]);
 
@@ -125,8 +133,13 @@ export function RangeCalendar({
             // valid check-in (you leave that morning, so it needn't be open).
             const disabled = past || (closed && !(checkIn && !checkOut && day > checkIn));
 
+            const nightPrice =
+              basePrice !== undefined && !disabled && nightOpen(day)
+                ? (customPrices[day] ?? basePrice)
+                : undefined;
+
             const base =
-              "relative aspect-square rounded-lg text-sm transition flex items-center justify-center";
+              "relative aspect-square rounded-lg text-sm transition flex flex-col items-center justify-center leading-none";
             let cls = "text-ink hover:bg-brand-light";
             if (disabled) cls = "text-ink/25 line-through cursor-not-allowed";
             if (inRange) cls = "bg-brand-light text-brand-dark";
@@ -139,10 +152,19 @@ export function RangeCalendar({
                 disabled={disabled && !(isStart || isEnd)}
                 onClick={() => handleClick(day)}
                 className={`${base} ${cls}`}
-                aria-label={day}
+                aria-label={nightPrice !== undefined ? `${day}, ${formatPrice(nightPrice, currency)} per night` : day}
                 aria-pressed={isStart || isEnd}
               >
-                {Number(day.slice(-2))}
+                <span>{Number(day.slice(-2))}</span>
+                {nightPrice !== undefined && (
+                  <span
+                    className={`mt-0.5 text-[0.6rem] ${
+                      isStart || isEnd ? "text-white/85" : "text-muted"
+                    }`}
+                  >
+                    {formatPrice(nightPrice, currency)}
+                  </span>
+                )}
               </button>
             );
           })}

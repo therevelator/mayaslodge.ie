@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { RangeCalendar } from "./RangeCalendar";
@@ -82,7 +83,7 @@ export function BookingWidget({
       {available.length === 0 ? (
         <div className="mt-5 rounded-xl bg-cream-deep/60 p-5 text-center text-sm text-muted">
           No dates are open for online booking right now. Please{" "}
-          <a href="/contact" className="font-semibold text-brand hover:text-brand-dark">get in touch</a>{" "}
+          <Link href="/contact" className="font-semibold text-brand hover:text-brand-dark">get in touch</Link>{" "}
           and we&rsquo;ll be glad to help.
         </div>
       ) : (
@@ -90,6 +91,9 @@ export function BookingWidget({
           <RangeCalendar
             available={available}
             todayISO={todayISO}
+            basePrice={basePrice}
+            customPrices={customPrices}
+            currency={currency}
             checkIn={checkIn}
             checkOut={checkOut}
             onSelect={(ci, co) => {

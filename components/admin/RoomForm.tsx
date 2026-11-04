@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { saveRoom, type RoomFormState } from "@/app/admin/actions";
@@ -212,7 +213,7 @@ export function RoomForm({
 
       <div className="flex items-center gap-3">
         <SaveButton isNew={isNew} />
-        <a href="/admin/rooms" className="btn btn-ghost">Cancel</a>
+        <Link href="/admin/rooms" className="btn btn-ghost">Cancel</Link>
       </div>
     </form>
   );

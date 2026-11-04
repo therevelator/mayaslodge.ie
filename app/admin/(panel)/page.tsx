@@ -6,6 +6,7 @@ import { formatDate, formatPrice } from "@/lib/format";
 import { StatusBadge, SourceBadge } from "@/components/admin/StatusBadge";
 import { BookingMeta } from "@/components/admin/BookingMeta";
 import { setBookingStatus } from "@/app/admin/actions";
+import { SubmitButton } from "@/components/admin/SubmitButton";
 
 export default async function AdminDashboard() {
   const today = todayUTC();
@@ -106,12 +107,12 @@ export default async function AdminDashboard() {
                   <form action={setBookingStatus}>
                     <input type="hidden" name="id" value={b.id} />
                     <input type="hidden" name="status" value="CONFIRMED" />
-                    <button className="btn btn-primary px-3 py-1.5 text-sm">Confirm</button>
+                    <SubmitButton className="btn btn-primary px-3 py-1.5 text-sm">Confirm</SubmitButton>
                   </form>
                   <form action={setBookingStatus}>
                     <input type="hidden" name="id" value={b.id} />
                     <input type="hidden" name="status" value="DECLINED" />
-                    <button className="btn btn-outline px-3 py-1.5 text-sm">Decline</button>
+                    <SubmitButton className="btn btn-outline px-3 py-1.5 text-sm">Decline</SubmitButton>
                   </form>
                 </div>
               </div>
