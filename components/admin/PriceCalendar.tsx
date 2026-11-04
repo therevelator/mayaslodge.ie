@@ -2,12 +2,18 @@
 
 import { useMemo, useOptimistic, useState, useTransition } from "react";
 import { MonthGrid, type CalBooking } from "./MonthGrid";
-import { setDayPrices, clearDayPrices } from "@/app/admin/actions";
+import { setDayPrices, clearDayPrices, blockDates } from "@/app/admin/actions";
 import { formatPrice, parsePriceToCents } from "@/lib/format";
 
-// The admin room calendar: two months side by side. The owner can select one
-// or more days and give those nights a custom price, or reset them to the
-// room's standard price.
+// The admin room calendar: two months side by side.
+//
+// Selecting: click a day to select it; click a later day to extend the
+// selection to that range (both days included); click again to start over.
+// Days that already have a booking or block (pending included) can't be
+// selected, so their price can't be changed and they can't be double-blocked.
+//
+// For the selection the owner can set a custom nightly price, go back to the
+// standard price, or block the room.
 
 type Month = { year: number; month: number };
 
@@ -51,9 +57,8 @@ export function PriceCalendar({
   basePrice: number;
   currency: string;
 }) {
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [anchor, setAnchor] = useState<string | null>(null);
-  const [rangeMode, setRangeMode] = useState(false);
+  const [start, setStart] = useState<string | null>(null);
+  const [end, setEnd] = useState<string | null>(null);
   const [price, setPrice] = useState("");
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
@@ -73,36 +78,71 @@ export function PriceCalendar({
   );
 
   const openSet = useMemo(() => new Set(openDays), [openDays]);
-  const sorted = useMemo(() => Array.from(selected).sort(), [selected]);
 
-  function onDayClick(iso: string, shiftKey: boolean) {
-    setMessage(null);
-    const next = new Set(selected);
-    if ((shiftKey || rangeMode) && anchor) {
-      for (const d of isoRange(anchor, iso)) if (d >= todayISO) next.add(d);
-      setAnchor(rangeMode ? null : iso);
-    } else {
-      if (next.has(iso)) next.delete(iso);
-      else next.add(iso);
-      setAnchor(iso);
+  // Every night taken by a pending/confirmed booking or a block.
+  const bookedSet = useMemo(() => {
+    const set = new Set<string>();
+    for (const b of bookings) {
+      const d = new Date(b.checkIn);
+      while (d < b.checkOut) {
+        set.add(d.toISOString().slice(0, 10));
+        d.setUTCDate(d.getUTCDate() + 1);
+      }
     }
-    setSelected(next);
+    return set;
+  }, [bookings]);
 
-    // Pre-fill the price box when every selected night has the same custom price.
-    const values = Array.from(next).map((d) => shownPrices[d]);
+  const days = useMemo(() => (start ? isoRange(start, end ?? start) : []), [start, end]);
+  const selected = useMemo(() => new Set(days), [days]);
+  const first = days[0];
+  const last = days[days.length - 1];
+
+  function prefillPrice(range: string[]) {
+    const values = range.map((d) => shownPrices[d]);
     if (values.length && values.every((v) => v !== undefined && v === values[0])) {
       setPrice(String(values[0]! / 100));
+    } else {
+      setPrice("");
     }
+  }
+
+  function onDayClick(iso: string) {
+    setMessage(null);
+    if (bookedSet.has(iso)) return; // MonthGrid doesn't offer these, but be safe.
+
+    // Start a new selection: nothing selected yet, a range already chosen, or
+    // the new day is before the current start.
+    if (!start || end || iso < start) {
+      setStart(iso);
+      setEnd(null);
+      prefillPrice([iso]);
+      return;
+    }
+    // Same day again: keep the single-day selection.
+    if (iso === start) return;
+
+    const range = isoRange(start, iso);
+    if (range.some((d) => bookedSet.has(d))) {
+      setStart(iso);
+      setEnd(null);
+      prefillPrice([iso]);
+      setMessage({ kind: "error", text: "That range crosses booked days, so I started a new selection." });
+      return;
+    }
+    setEnd(iso);
+    prefillPrice(range);
   }
 
   function clearSelection() {
-    setSelected(new Set());
-    setAnchor(null);
+    setStart(null);
+    setEnd(null);
     setPrice("");
   }
 
-  function apply(kind: "set" | "reset") {
-    const dates = sorted;
+  const nightsLabel = `${days.length} night${days.length > 1 ? "s" : ""}`;
+
+  function applyPrice(kind: "set" | "reset") {
+    const dates = days;
     const cents = kind === "set" ? parsePriceToCents(price) : null;
     startTransition(async () => {
       if (kind === "reset" || (cents && cents > 0)) {
@@ -110,43 +150,45 @@ export function PriceCalendar({
         clearSelection();
       }
       const res =
-        kind === "set"
-          ? await setDayPrices(roomId, dates, price)
-          : await clearDayPrices(roomId, dates);
+        kind === "set" ? await setDayPrices(roomId, dates, price) : await clearDayPrices(roomId, dates);
+      setMessage(
+        res.error
+          ? { kind: "error", text: res.error }
+          : {
+              kind: "ok",
+              text:
+                kind === "set"
+                  ? `Price saved for ${dates.length} night${dates.length > 1 ? "s" : ""}.`
+                  : `${dates.length} night${dates.length > 1 ? "s" : ""} back to the standard price.`,
+            }
+      );
+    });
+  }
+
+  function block() {
+    if (!first || !last) return;
+    const [from, to, count] = [first, last, days.length];
+    startTransition(async () => {
+      const res = await blockDates(roomId, from, to);
       if (res.error) {
         setMessage({ kind: "error", text: res.error });
         return;
       }
+      clearSelection();
       setMessage({
         kind: "ok",
-        text:
-          kind === "set"
-            ? `Price saved for ${dates.length} night${dates.length > 1 ? "s" : ""}.`
-            : `${dates.length} night${dates.length > 1 ? "s" : ""} back to the standard price.`,
+        text: `Room blocked for ${count} night${count > 1 ? "s" : ""} (${shortDate(from)}${count > 1 ? ` – ${shortDate(to)}` : ""}). To unblock, delete the block in the list below.`,
       });
     });
   }
 
-  const customCount = sorted.filter((d) => shownPrices[d] !== undefined).length;
+  const customCount = days.filter((d) => shownPrices[d] !== undefined).length;
 
   return (
     <div className="card p-5 sm:p-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm">
-        <p className="text-muted">
-          Click days to select them. <span className="hidden sm:inline">Shift+click selects a range.</span>
-        </p>
-        <label className="flex cursor-pointer items-center gap-2 text-ink/80">
-          <input
-            type="checkbox"
-            checked={rangeMode}
-            onChange={(e) => {
-              setRangeMode(e.target.checked);
-              setAnchor(null);
-            }}
-          />
-          Range: tap first and last day
-        </label>
-      </div>
+      <p className="mb-4 text-sm text-muted">
+        Click a day to select it. Click a later day to select the whole range. Booked days can&rsquo;t be selected.
+      </p>
 
       <div className="flex flex-col gap-8 sm:flex-row">
         {months.map((m) => (
@@ -176,30 +218,31 @@ export function PriceCalendar({
         <span className="flex items-center gap-1.5"><span className="text-ink/40">€</span> Standard price</span>
       </div>
 
-      {/* Price panel */}
+      {/* Actions for the selection */}
       <div className="mt-5 rounded-xl bg-cream-deep/60 p-4">
-        {sorted.length === 0 ? (
+        {days.length === 0 ? (
           <p className="text-sm text-muted">
             Standard price for this room: <strong className="text-ink">{formatPrice(basePrice, currency)}</strong> / night.
-            Select days above to give those nights a different price.
+            Select a day or a range to change its price or block the room.
           </p>
         ) : (
           <>
             <p className="text-sm text-ink">
-              <strong>{sorted.length} night{sorted.length > 1 ? "s" : ""} selected</strong>
+              <strong>{nightsLabel} selected</strong>
               <span className="text-muted">
-                {" "}· {sorted.length === 1 ? shortDate(sorted[0]) : `${shortDate(sorted[0])} – ${shortDate(sorted[sorted.length - 1])}`}
+                {" "}· {days.length === 1 ? shortDate(first) : `${shortDate(first)} – ${shortDate(last)}`}
                 {customCount > 0 && ` · ${customCount} with a custom price`}
               </span>
             </p>
-            <p className="mt-1 text-xs text-muted">
-              Each day&rsquo;s price is for the night starting that day. Standard price: {formatPrice(basePrice, currency)}.
-            </p>
+            {!end && (
+              <p className="mt-1 text-xs text-muted">Click a later day to extend this to a range.</p>
+            )}
+
             <form
               className="mt-3 flex flex-wrap items-end gap-3"
               onSubmit={(e) => {
                 e.preventDefault();
-                apply("set");
+                applyPrice("set");
               }}
             >
               <div>
@@ -218,14 +261,26 @@ export function PriceCalendar({
                 {pending ? "Saving…" : "Set price"}
               </button>
               {customCount > 0 && (
-                <button type="button" className="btn btn-outline" disabled={pending} onClick={() => apply("reset")}>
+                <button type="button" className="btn btn-outline" disabled={pending} onClick={() => applyPrice("reset")}>
                   Use standard price
                 </button>
               )}
+            </form>
+
+            <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-brand/10 pt-4">
+              <button
+                type="button"
+                className="btn bg-charcoal text-white hover:bg-charcoal/90"
+                disabled={pending}
+                onClick={block}
+              >
+                {pending ? "Working…" : days.length === 1 ? "Block this day" : "Block these dates"}
+              </button>
               <button type="button" className="btn btn-ghost" disabled={pending} onClick={clearSelection}>
                 Clear selection
               </button>
-            </form>
+              <span className="text-xs text-muted">Blocking stops guests booking these nights.</span>
+            </div>
           </>
         )}
         {message && (

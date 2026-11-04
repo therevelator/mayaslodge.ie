@@ -11,10 +11,11 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 import { parsePriceToCents } from "@/lib/format";
-import { dateFromISO, nightsBetween } from "@/lib/dates";
+import { addDays, dateFromISO, nightsBetween } from "@/lib/dates";
 import { isRoomAvailable } from "@/lib/availability";
 import { stayTotal } from "@/lib/pricing";
 import {
+  BLOCKING_STATUSES,
   BOOKING_STATUSES,
   BED_TYPES,
   type BookingStatus,
@@ -286,6 +287,27 @@ function cleanDates(dates: unknown): string[] | null {
   return list.every((d) => ISO_DAY.test(d)) ? list : null;
 }
 
+/** Of the given days, which ones are taken by a pending/confirmed booking or a block? */
+async function bookedDays(roomId: string, days: string[]): Promise<string[]> {
+  if (days.length === 0) return [];
+  const sortedDays = [...days].sort();
+  const from = dateFromISO(sortedDays[0]);
+  const to = addDays(dateFromISO(sortedDays[sortedDays.length - 1]), 1);
+  const stays = await prisma.booking.findMany({
+    where: {
+      roomId,
+      status: { in: BLOCKING_STATUSES },
+      checkIn: { lt: to },
+      checkOut: { gt: from },
+    },
+    select: { checkIn: true, checkOut: true },
+  });
+  return sortedDays.filter((iso) => {
+    const d = dateFromISO(iso);
+    return stays.some((s) => d >= s.checkIn && d < s.checkOut);
+  });
+}
+
 /** Set a custom price (e.g. "120" or "120.50" euros) on the given nights. */
 export async function setDayPrices(
   roomId: string,
@@ -301,6 +323,9 @@ export async function setDayPrices(
 
   const room = await prisma.room.findUnique({ where: { id: roomId }, select: { id: true } });
   if (!room) return { error: "Room not found." };
+  if ((await bookedDays(roomId, days)).length > 0) {
+    return { error: "Some of these days are already booked, so their price can't be changed." };
+  }
 
   await prisma.$transaction(
     days.map((iso) => {
@@ -322,10 +347,55 @@ export async function clearDayPrices(roomId: string, dates: string[]): Promise<D
   await requireSession();
   const days = cleanDates(dates);
   if (!roomId || !days) return { error: "Select one or more days first." };
+  if ((await bookedDays(roomId, days)).length > 0) {
+    return { error: "Some of these days are already booked, so their price can't be changed." };
+  }
   await prisma.roomPrice.deleteMany({
     where: { roomId, date: { in: days.map(dateFromISO) } },
   });
   revalidatePath("/admin/calendar");
+  revalidatePath("/rooms", "layout");
+  return { ok: true };
+}
+
+/**
+ * Block the room for a day or a run of days (from `first` to `last`, both
+ * included — i.e. the nights starting on those days). Creates a BLOCK entry,
+ * which shows in the calendar and stops guests booking those nights.
+ */
+export async function blockDates(
+  roomId: string,
+  first: string,
+  last: string,
+  note?: string
+): Promise<DayPriceState> {
+  await requireSession();
+  if (!roomId || !ISO_DAY.test(first) || !ISO_DAY.test(last) || last < first) {
+    return { error: "Select a day or a range of days first." };
+  }
+  const checkIn = dateFromISO(first);
+  const checkOut = addDays(dateFromISO(last), 1);
+  const nights = nightsBetween(checkIn, checkOut);
+  if (nights > MAX_PRICE_DAYS) return { error: "That range is too long." };
+
+  const free = await isRoomAvailable(roomId, checkIn, checkOut);
+  if (!free) return { error: "Some of these days are already booked or blocked." };
+
+  await prisma.booking.create({
+    data: {
+      roomId,
+      guestName: note?.trim() || "Blocked",
+      checkIn,
+      checkOut,
+      guests: 0,
+      nights,
+      totalPrice: null,
+      status: "CONFIRMED",
+      source: "BLOCK",
+    },
+  });
+  revalidatePath("/admin/calendar");
+  revalidatePath("/admin/bookings");
   revalidatePath("/rooms", "layout");
   return { ok: true };
 }
