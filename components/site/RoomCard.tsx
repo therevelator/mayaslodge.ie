@@ -9,10 +9,14 @@ type RoomWithRelations = Room & { images: RoomImage[]; amenities: Amenity[] };
 export function RoomCard({
   room,
   currency,
+  displayPrice,
 }: {
   room: RoomWithRelations;
   currency: string;
+  /** Advertised price (lowest open night); falls back to the standard price. */
+  displayPrice?: { price: number; from: boolean };
 }) {
+  const shown = displayPrice ?? { price: room.basePrice, from: false };
   const cover = room.images[0];
   const highlights = room.amenities.slice(0, 3);
 
@@ -57,8 +61,9 @@ export function RoomCard({
 
         <div className="mt-5 flex items-end justify-between border-t border-brand/10 pt-4">
           <div>
+            {shown.from && <span className="text-sm text-muted">from </span>}
             <span className="text-lg font-semibold text-ink">
-              {formatPrice(room.basePrice, currency)}
+              {formatPrice(shown.price, currency)}
             </span>
             <span className="text-sm text-muted"> / night</span>
           </div>

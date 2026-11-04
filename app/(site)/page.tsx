@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/settings";
 import { RoomCard } from "@/components/site/RoomCard";
+import { getDisplayPrices } from "@/lib/pricing";
 import { CloverMark, LogoMark } from "@/components/Logo";
 import { Icon } from "@/components/Icon";
 
@@ -14,6 +15,7 @@ export default async function HomePage() {
       include: { images: { orderBy: { sortOrder: "asc" } }, amenities: true },
     }),
   ]);
+  const displayPrices = await getDisplayPrices(rooms);
 
   return (
     <>
@@ -82,7 +84,7 @@ export default async function HomePage() {
         </div>
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {rooms.slice(0, 3).map((room) => (
-            <RoomCard key={room.id} room={room} currency={settings.currency} />
+            <RoomCard key={room.id} room={room} currency={settings.currency} displayPrice={displayPrices[room.id]} />
           ))}
         </div>
         <div className="mt-8 text-center sm:hidden">

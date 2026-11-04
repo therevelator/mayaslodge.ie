@@ -49,6 +49,15 @@ export function BookingWidget({
     { ok: false }
   );
 
+  // Advertised price: the lowest bookable night (custom prices included),
+  // "from" when bookable nights don't all cost the same.
+  const headline = (() => {
+    const prices = available.map((d) => customPrices[d] ?? basePrice);
+    if (prices.length === 0) return { price: basePrice, from: false };
+    const min = Math.min(...prices);
+    return { price: min, from: Math.max(...prices) > min };
+  })();
+
   const nights = checkIn && checkOut ? nightsBetween(checkIn, checkOut) : 0;
   // Each night costs its custom price if the owner set one, otherwise the
   // standard price. Nights are the days from check-in up to (not incl.) check-out.
@@ -74,7 +83,8 @@ export function BookingWidget({
     <div className="card p-5 sm:p-6">
       <div className="flex items-baseline justify-between">
         <div>
-          <span className="text-2xl font-semibold text-ink">{formatPrice(basePrice, currency)}</span>
+          {headline.from && <span className="text-muted">from </span>}
+          <span className="text-2xl font-semibold text-ink">{formatPrice(headline.price, currency)}</span>
           <span className="text-muted"> / night</span>
         </div>
         {breakfastIncluded && (
