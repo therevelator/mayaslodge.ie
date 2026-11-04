@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/settings";
 import { RoomCard } from "@/components/site/RoomCard";
-import { getDisplayPrices } from "@/lib/pricing";
 
 export const metadata: Metadata = {
   title: "Our Rooms",
@@ -19,7 +18,6 @@ export default async function RoomsPage() {
       include: { images: { orderBy: { sortOrder: "asc" } }, amenities: true },
     }),
   ]);
-  const displayPrices = await getDisplayPrices(rooms);
 
   return (
     <>
@@ -42,7 +40,7 @@ export default async function RoomsPage() {
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {rooms.map((room) => (
-              <RoomCard key={room.id} room={room} currency={settings.currency} displayPrice={displayPrices[room.id]} />
+              <RoomCard key={room.id} room={room} currency={settings.currency} />
             ))}
           </div>
         )}

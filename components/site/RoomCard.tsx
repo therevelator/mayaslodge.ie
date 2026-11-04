@@ -1,22 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
-import { formatPrice } from "@/lib/format";
 import type { Room, RoomImage, Amenity } from "@prisma/client";
 
 type RoomWithRelations = Room & { images: RoomImage[]; amenities: Amenity[] };
 
 export function RoomCard({
   room,
-  currency,
-  displayPrice,
 }: {
   room: RoomWithRelations;
-  currency: string;
-  /** Advertised price (lowest open night); falls back to the standard price. */
-  displayPrice?: { price: number; from: boolean };
+  /** Kept for callers; cards no longer show a price (it depends on the dates). */
+  currency?: string;
 }) {
-  const shown = displayPrice ?? { price: room.basePrice, from: false };
   const cover = room.images[0];
   const highlights = room.amenities.slice(0, 3);
 
@@ -60,13 +55,7 @@ export function RoomCard({
         </ul>
 
         <div className="mt-5 flex items-end justify-between border-t border-brand/10 pt-4">
-          <div>
-            {shown.from && <span className="text-sm text-muted">from </span>}
-            <span className="text-lg font-semibold text-ink">
-              {formatPrice(shown.price, currency)}
-            </span>
-            <span className="text-sm text-muted"> / night</span>
-          </div>
+          <span className="text-sm text-muted">Select dates for prices</span>
           <span className="text-sm font-semibold text-brand group-hover:text-brand-dark">
             View &amp; book →
           </span>
