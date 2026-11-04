@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import Image from "next/image";
 import { addRoomImage, deleteRoomImage } from "@/app/admin/actions";
+import { shrinkImage } from "@/lib/resize-image";
 
 type Img = { id: string; url: string; alt: string | null };
 
@@ -14,6 +15,7 @@ export function ImageManager({
   images: Img[];
 }) {
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -21,18 +23,30 @@ export function ImageManager({
     if (!files || files.length === 0) return;
     setBusy(true);
     setError(null);
+    const list = Array.from(files);
     try {
-      for (const file of Array.from(files)) {
+      for (const [i, original] of list.entries()) {
+        setProgress(list.length > 1 ? `Uploading ${i + 1} of ${list.length}…` : "Uploading…");
+        // Shrink big phone photos in the browser first (faster upload, faster
+        // pages, and under the server's ~6 MB request limit).
+        const file = await shrinkImage(original);
         const fd = new FormData();
         fd.append("file", file);
         const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Upload failed");
+        // The server may answer without JSON (e.g. 413 when a file is too big).
+        const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+        if (!res.ok || !data.url) {
+          const why =
+            res.status === 413
+              ? "is too large to upload, even after resizing. Try a smaller photo."
+              : (data.error ?? `could not be uploaded (error ${res.status}).`);
+          throw new Error(`"${original.name}" ${why}`);
+        }
 
         const add = new FormData();
         add.append("roomId", roomId);
         add.append("url", data.url);
-        add.append("alt", file.name.replace(/\.[^.]+$/, ""));
+        add.append("alt", original.name.replace(/\.[^.]+$/, ""));
         await addRoomImage(add);
       }
       if (inputRef.current) inputRef.current.value = "";
@@ -40,6 +54,7 @@ export function ImageManager({
       setError(e instanceof Error ? e.message : "Upload failed");
     } finally {
       setBusy(false);
+      setProgress(null);
     }
   }
 
@@ -76,7 +91,7 @@ export function ImageManager({
             onChange={(e) => onFiles(e.target.files)}
             disabled={busy}
           />
-          {busy ? "Uploading…" : (
+          {busy ? (progress ?? "Uploading…") : (
             <>
               <span className="text-2xl leading-none">+</span>
               <span className="mt-1">Add photos</span>
@@ -85,7 +100,7 @@ export function ImageManager({
         </label>
       </div>
       {error && <p className="mt-2 text-sm text-orange-dark">{error}</p>}
-      <p className="mt-2 text-xs text-muted">JPG, PNG, WebP up to 8MB. The first photo is used as the cover.</p>
+      <p className="mt-2 text-xs text-muted">JPG, PNG or WebP. Large phone photos are resized automatically. The first photo is used as the cover.</p>
     </div>
   );
 }
