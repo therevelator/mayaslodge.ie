@@ -51,7 +51,15 @@ export function ImageManager({
       }
       if (inputRef.current) inputRef.current.value = "";
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Upload failed");
+      const msg = e instanceof Error ? e.message : "Upload failed";
+      // The site was updated while this page was open: reload to get the new
+      // version (the photo file is already stored; just add it again).
+      if (/Server Action .* was not found|Failed to find Server Action/i.test(msg)) {
+        setError("The site was just updated — reloading this page. Please add the photo again.");
+        setTimeout(() => window.location.reload(), 1500);
+        return;
+      }
+      setError(msg);
     } finally {
       setBusy(false);
       setProgress(null);
