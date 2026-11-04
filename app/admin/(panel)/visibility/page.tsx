@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { toggleRoomPublished } from "@/app/admin/actions";
+import { VisibilityToggle } from "@/components/admin/VisibilityToggle";
 
 export const metadata = { title: "Show / hide rooms" };
 
@@ -36,26 +36,7 @@ export default async function VisibilityPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {rooms.map((room) => (
-            <form key={room.id} action={toggleRoomPublished}>
-              <input type="hidden" name="id" value={room.id} />
-              <button
-                type="submit"
-                className={`flex w-full flex-col items-center justify-center gap-3 rounded-3xl px-5 py-10 text-center text-white shadow-sm transition active:scale-[0.98] ${
-                  room.published
-                    ? "bg-brand hover:bg-brand-dark"
-                    : "bg-red-600 hover:bg-red-700"
-                }`}
-              >
-                <span className="text-2xl font-bold leading-tight">{room.name}</span>
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/20 px-5 py-2 text-lg font-bold tracking-wide">
-                  <span className="h-3 w-3 rounded-full bg-white" />
-                  {room.published ? "LIVE" : "HIDDEN"}
-                </span>
-                <span className="text-sm font-medium text-white/85">
-                  {room.published ? "Tap to hide it" : "Tap to show it"}
-                </span>
-              </button>
-            </form>
+            <VisibilityToggle key={room.id} id={room.id} name={room.name} published={room.published} />
           ))}
         </div>
       )}

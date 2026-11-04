@@ -8,6 +8,7 @@ import { StatusBadge, SourceBadge } from "@/components/admin/StatusBadge";
 import { BookingMeta } from "@/components/admin/BookingMeta";
 import { setBookingStatus, deleteBooking } from "@/app/admin/actions";
 import { BOOKING_STATUSES } from "@/lib/constants";
+import { SubmitButton } from "@/components/admin/SubmitButton";
 
 const FILTERS = [
   { key: "ALL", label: "All" },
@@ -121,7 +122,7 @@ export default async function AdminBookingsPage({
                   )}
                   <form action={deleteBooking}>
                     <input type="hidden" name="id" value={b.id} />
-                    <button className="btn btn-ghost px-3 py-1.5 text-sm text-orange-dark">Delete</button>
+                    <SubmitButton className="btn btn-ghost px-3 py-1.5 text-sm text-orange-dark">Delete</SubmitButton>
                   </form>
                 </div>
               </div>
@@ -148,7 +149,7 @@ function StatusButton({
     <form action={setBookingStatus}>
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="status" value={status} />
-      <button className={`btn btn-${variant} px-3 py-1.5 text-sm`}>{label}</button>
+      <SubmitButton className={`btn btn-${variant} px-3 py-1.5 text-sm`}>{label}</SubmitButton>
     </form>
   );
 }
