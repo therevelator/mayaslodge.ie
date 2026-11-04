@@ -287,7 +287,7 @@ function cleanDates(dates: unknown): string[] | null {
   return list.every((d) => ISO_DAY.test(d)) ? list : null;
 }
 
-/** Of the given days, which ones are taken by a pending/confirmed booking or a block? */
+/** Of the given days, which ones are taken by a guest booking (pending or confirmed)? Blocks don't count. */
 async function bookedDays(roomId: string, days: string[]): Promise<string[]> {
   if (days.length === 0) return [];
   const sortedDays = [...days].sort();
@@ -297,6 +297,7 @@ async function bookedDays(roomId: string, days: string[]): Promise<string[]> {
     where: {
       roomId,
       status: { in: BLOCKING_STATUSES },
+      source: { not: "BLOCK" },
       checkIn: { lt: to },
       checkOut: { gt: from },
     },
@@ -306,6 +307,39 @@ async function bookedDays(roomId: string, days: string[]): Promise<string[]> {
     const d = dateFromISO(iso);
     return stays.some((s) => d >= s.checkIn && d < s.checkOut);
   });
+}
+
+/** Every day from `first` to `last` (both included), as YYYY-MM-DD. */
+function dayList(first: string, last: string): string[] {
+  const out: string[] = [];
+  for (let d = dateFromISO(first); d <= dateFromISO(last); d = addDays(d, 1)) {
+    out.push(d.toISOString().slice(0, 10));
+  }
+  return out;
+}
+
+/** Group sorted days into contiguous runs [start, end) of UTC-midnight dates. */
+function toRuns(days: string[]): { start: Date; end: Date }[] {
+  const runs: { start: Date; end: Date }[] = [];
+  for (const iso of [...days].sort()) {
+    const d = dateFromISO(iso);
+    const lastRun = runs[runs.length - 1];
+    if (lastRun && lastRun.end.getTime() === d.getTime()) lastRun.end = addDays(d, 1);
+    else runs.push({ start: d, end: addDays(d, 1) });
+  }
+  return runs;
+}
+
+function validRange(roomId: string, first: string, last: string): boolean {
+  return Boolean(roomId) && ISO_DAY.test(first) && ISO_DAY.test(last) && first <= last &&
+    nightsBetween(dateFromISO(first), dateFromISO(last)) < MAX_PRICE_DAYS;
+}
+
+function revalidateCalendar() {
+  revalidatePath("/admin/calendar");
+  revalidatePath("/admin/bookings");
+  revalidatePath("/admin");
+  revalidatePath("/rooms", "layout");
 }
 
 /** Set a custom price (e.g. "120" or "120.50" euros) on the given nights. */
@@ -359,44 +393,127 @@ export async function clearDayPrices(roomId: string, dates: string[]): Promise<D
 }
 
 /**
- * Block the room for a day or a run of days (from `first` to `last`, both
- * included — i.e. the nights starting on those days). Creates a BLOCK entry,
- * which shows in the calendar and stops guests booking those nights.
+ * Block the room for the selected nights (from `first` to `last`, both
+ * included). Nights that are already blocked are skipped; guest bookings in
+ * the range stop the whole action.
  */
-export async function blockDates(
+export async function blockDates(roomId: string, first: string, last: string): Promise<DayPriceState> {
+  await requireSession();
+  if (!validRange(roomId, first, last)) return { error: "Select a day or a range of days first." };
+  const days = dayList(first, last);
+  if ((await bookedDays(roomId, days)).length > 0) {
+    return { error: "Some of these days have a guest booking, so they can't be blocked." };
+  }
+  const from = dateFromISO(first);
+  const to = addDays(dateFromISO(last), 1);
+  const blocks = await prisma.booking.findMany({
+    where: { roomId, source: "BLOCK", status: { in: BLOCKING_STATUSES }, checkIn: { lt: to }, checkOut: { gt: from } },
+    select: { checkIn: true, checkOut: true },
+  });
+  const free = days.filter((iso) => {
+    const d = dateFromISO(iso);
+    return !blocks.some((b) => d >= b.checkIn && d < b.checkOut);
+  });
+  if (free.length === 0) return { error: "These days are already blocked." };
+
+  await prisma.$transaction(
+    toRuns(free).map((r) =>
+      prisma.booking.create({
+        data: {
+          roomId,
+          guestName: "Blocked",
+          checkIn: r.start,
+          checkOut: r.end,
+          guests: 0,
+          nights: nightsBetween(r.start, r.end),
+          totalPrice: null,
+          status: "CONFIRMED",
+          source: "BLOCK",
+        },
+      })
+    )
+  );
+  revalidateCalendar();
+  return { ok: true };
+}
+
+/** Remove blocks from the selected nights (blocks partly outside are trimmed or split). */
+export async function unblockDates(roomId: string, first: string, last: string): Promise<DayPriceState> {
+  await requireSession();
+  if (!validRange(roomId, first, last)) return { error: "Select a day or a range of days first." };
+  const from = dateFromISO(first);
+  const to = addDays(dateFromISO(last), 1);
+  const blocks = await prisma.booking.findMany({
+    where: { roomId, source: "BLOCK", status: { in: BLOCKING_STATUSES }, checkIn: { lt: to }, checkOut: { gt: from } },
+  });
+  if (blocks.length === 0) return { error: "None of these days are blocked." };
+
+  await prisma.$transaction(
+    blocks.flatMap((b) => {
+      const keep: { start: Date; end: Date }[] = [];
+      if (b.checkIn < from) keep.push({ start: b.checkIn, end: from });
+      if (b.checkOut > to) keep.push({ start: to, end: b.checkOut });
+      return [
+        prisma.booking.delete({ where: { id: b.id } }),
+        ...keep.map((k) =>
+          prisma.booking.create({
+            data: {
+              roomId,
+              guestName: b.guestName,
+              message: b.message,
+              checkIn: k.start,
+              checkOut: k.end,
+              guests: 0,
+              nights: nightsBetween(k.start, k.end),
+              totalPrice: null,
+              status: b.status,
+              source: "BLOCK",
+            },
+          })
+        ),
+      ];
+    })
+  );
+  revalidateCalendar();
+  return { ok: true };
+}
+
+/**
+ * Open (guests can request) or close the selected nights. Open periods are
+ * stored as windows; we rebuild the windows around the selection so they stay
+ * merged and tidy.
+ */
+export async function setDatesOpen(
   roomId: string,
   first: string,
   last: string,
-  note?: string
+  open: boolean
 ): Promise<DayPriceState> {
   await requireSession();
-  if (!roomId || !ISO_DAY.test(first) || !ISO_DAY.test(last) || last < first) {
-    return { error: "Select a day or a range of days first." };
-  }
-  const checkIn = dateFromISO(first);
-  const checkOut = addDays(dateFromISO(last), 1);
-  const nights = nightsBetween(checkIn, checkOut);
-  if (nights > MAX_PRICE_DAYS) return { error: "That range is too long." };
+  if (!validRange(roomId, first, last)) return { error: "Select a day or a range of days first." };
+  const from = dateFromISO(first);
+  const to = addDays(dateFromISO(last), 1);
 
-  const free = await isRoomAvailable(roomId, checkIn, checkOut);
-  if (!free) return { error: "Some of these days are already booked or blocked." };
-
-  await prisma.booking.create({
-    data: {
-      roomId,
-      guestName: note?.trim() || "Blocked",
-      checkIn,
-      checkOut,
-      guests: 0,
-      nights,
-      totalPrice: null,
-      status: "CONFIRMED",
-      source: "BLOCK",
-    },
+  // Windows touching the selection (including ones that just meet it).
+  const windows = await prisma.availabilityWindow.findMany({
+    where: { roomId, start: { lte: to }, end: { gte: from } },
   });
-  revalidatePath("/admin/calendar");
-  revalidatePath("/admin/bookings");
-  revalidatePath("/rooms", "layout");
+  const openDays = new Set<string>();
+  for (const w of windows) {
+    for (let d = new Date(w.start); d < w.end; d = addDays(d, 1)) openDays.add(d.toISOString().slice(0, 10));
+  }
+  for (const iso of dayList(first, last)) {
+    if (open) openDays.add(iso);
+    else openDays.delete(iso);
+  }
+
+  await prisma.$transaction([
+    prisma.availabilityWindow.deleteMany({ where: { id: { in: windows.map((w) => w.id) } } }),
+    ...toRuns(Array.from(openDays)).map((r) =>
+      prisma.availabilityWindow.create({ data: { roomId, start: r.start, end: r.end } })
+    ),
+  ]);
+  revalidateCalendar();
   return { ok: true };
 }
 

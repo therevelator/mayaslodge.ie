@@ -1,15 +1,13 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { monthLabel, nightsBetween, todayUTC, addDays } from "@/lib/dates";
-import { formatDate, formatDateShort, toISODate } from "@/lib/format";
+import { monthLabel, nightsBetween, todayUTC } from "@/lib/dates";
+import { formatDate, toISODate } from "@/lib/format";
 import { getOpenWindows, openDaySet } from "@/lib/availability";
 import { PriceCalendar } from "@/components/admin/PriceCalendar";
 import { getCustomPrices } from "@/lib/pricing";
 import { getSettings } from "@/lib/settings";
 import { CalendarRoomPicker } from "@/components/admin/CalendarRoomPicker";
 import { AdminBookingRow } from "@/components/admin/AdminBookingRow";
-import { AddReservationForm } from "@/components/admin/AddReservationForm";
-import { OpenDatesForm } from "@/components/admin/OpenDatesForm";
 
 function parseMonth(input?: string): { year: number; month: number } {
   if (input && /^\d{4}-\d{2}$/.test(input)) {
@@ -53,7 +51,7 @@ export default async function AdminCalendarPage({
 
   // Everything below depends only on the room and the month, so load it in
   // parallel (one database round trip instead of four).
-  const [bookings, viewWindows, customPrices, settings, futureWindows] = await Promise.all([
+  const [bookings, viewWindows, customPrices, settings] = await Promise.all([
     prisma.booking.findMany({
       where: {
         roomId: selectedRoom.id,
@@ -66,10 +64,6 @@ export default async function AdminCalendarPage({
     getOpenWindows(selectedRoom.id, windowStart, windowEnd),
     getCustomPrices(selectedRoom.id, windowStart, windowEnd),
     getSettings(),
-    prisma.availabilityWindow.findMany({
-      where: { roomId: selectedRoom.id, end: { gt: todayUTC() } },
-      orderBy: { start: "asc" },
-    }),
   ]);
 
   const calBookings = bookings.map((b) => ({
@@ -85,10 +79,6 @@ export default async function AdminCalendarPage({
   // in the "Open dates" card.
   const openDays = Array.from(openDaySet(viewWindows));
 
-  const windowList = futureWindows.map((w) => ({
-    id: w.id,
-    label: `${formatDateShort(w.start)} – ${formatDateShort(addDays(w.end, -1))}`,
-  }));
 
   const todayISO = toISODate(todayUTC());
   const month1 = monthParam(year, month);
@@ -121,6 +111,7 @@ export default async function AdminCalendarPage({
       {/* Calendar — select days to set custom nightly prices */}
       <PriceCalendar
         roomId={selectedRoom.id}
+        maxGuests={selectedRoom.maxGuests}
         months={[
           { year, month },
           { year: month === 11 ? year + 1 : year, month: (month + 1) % 12 },
@@ -132,18 +123,6 @@ export default async function AdminCalendarPage({
         basePrice={selectedRoom.basePrice}
         currency={settings.currency}
       />
-
-      {/* Open dates — the primary availability control */}
-      <section className="card p-6">
-        <h2 className="text-lg font-semibold text-brand-dark">Open dates for guests</h2>
-        <div className="mt-2">
-          <OpenDatesForm
-            roomId={selectedRoom.id}
-            roomName={selectedRoom.name}
-            windows={windowList}
-          />
-        </div>
-      </section>
 
       {/* Bookings shown in this view, with quick actions */}
       <section>
@@ -191,20 +170,6 @@ export default async function AdminCalendarPage({
         )}
       </section>
 
-      {/* Add reservation */}
-      <section className="card max-w-2xl p-6">
-        <h2 className="text-lg font-semibold text-brand-dark">Add a reservation or block</h2>
-        <p className="mt-1 text-sm text-muted">
-          Use this for phone or email bookings, or to block dates for
-          maintenance. These immediately mark the room as unavailable.
-        </p>
-        <div className="mt-4">
-          <AddReservationForm
-            rooms={rooms.map((r) => ({ id: r.id, name: r.name }))}
-            defaultRoomId={selectedRoom.id}
-          />
-        </div>
-      </section>
     </div>
   );
 }

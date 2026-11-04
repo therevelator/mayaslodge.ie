@@ -85,8 +85,9 @@ export function MonthGrid({
           // Price shown on the day: the custom one if set, else the standard one.
           const shownPrice = past ? undefined : (custom ?? basePrice);
           const isSelected = selected?.has(iso) ?? false;
-          // Booked/blocked days can't be selected (no price changes, no double block).
-          const clickable = Boolean(onDayClick) && !past && !booking;
+          // Guest-booked days can't be selected; blocked days can (to unblock them).
+          const guestBooked = Boolean(booking && booking.source !== "BLOCK");
+          const clickable = Boolean(onDayClick) && !past && !guestBooked;
           const isStart =
             booking &&
             (day.getTime() === booking.checkIn.getTime() ||
@@ -101,7 +102,10 @@ export function MonthGrid({
             title = open ? "Open for booking" : "Closed";
           } else {
             cls = `${cellColor(booking)} ${past ? "opacity-60" : ""}`;
-            title = `${booking.guestName} · ${booking.status}${onDayClick ? " · booked, can't be changed here" : ""}`;
+            title =
+              booking.source === "BLOCK"
+                ? "Blocked"
+                : `${booking.guestName} · ${booking.status}${onDayClick ? " · guest booking, can't be changed here" : ""}`;
           }
           if (custom !== undefined) title += ` · ${formatPrice(custom, currency)} / night`;
 
