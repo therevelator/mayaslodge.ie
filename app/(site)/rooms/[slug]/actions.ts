@@ -1,6 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { notifyNewBooking } from "@/lib/notify";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { isRoomAvailable, isRangeOpen } from "@/lib/availability";
@@ -110,6 +112,23 @@ export async function requestBooking(
       ...meta,
     },
   });
+
+  // Email the owner once the guest already has their confirmation page.
+  after(() =>
+    notifyNewBooking({
+      id: booking.id,
+      roomName: room.name,
+      guestName: booking.guestName,
+      guestEmail: booking.guestEmail,
+      guestPhone: booking.guestPhone,
+      checkIn: booking.checkIn,
+      checkOut: booking.checkOut,
+      nights,
+      guests: booking.guests,
+      totalPrice: booking.totalPrice,
+      message: booking.message,
+    })
+  );
 
   redirect(`/booking/success?ref=${booking.id.slice(-6).toUpperCase()}`);
 }
