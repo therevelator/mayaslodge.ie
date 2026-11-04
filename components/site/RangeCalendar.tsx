@@ -31,6 +31,8 @@ export type RangeCalendarProps = {
   checkOut: string | null;
   onSelect: (checkIn: string | null, checkOut: string | null) => void;
   months?: number;
+  /** Longest stay that can be selected, in nights. */
+  maxNights?: number;
   /** Nightly price shown under bookable days (custom prices override base). */
   basePrice?: number;
   customPrices?: Record<string, number>;
@@ -44,6 +46,7 @@ export function RangeCalendar({
   checkOut,
   onSelect,
   months = 2,
+  maxNights,
   basePrice,
   customPrices = {},
   currency = "EUR",
@@ -69,6 +72,16 @@ export function RangeCalendar({
     return false;
   };
 
+  // Latest check-out allowed for the current check-in (maxNights after it).
+  const lastCheckOut =
+    checkIn && maxNights
+      ? (() => {
+          const d = new Date(`${checkIn}T00:00:00Z`);
+          d.setUTCDate(d.getUTCDate() + maxNights);
+          return d.toISOString().slice(0, 10);
+        })()
+      : null;
+
   const handleClick = (day: string) => {
     // Starting a fresh selection.
     if (!checkIn || (checkIn && checkOut)) {
@@ -80,6 +93,11 @@ export function RangeCalendar({
     if (day <= checkIn) {
       if (!nightOpen(day)) return;
       onSelect(day, null); // move the start earlier
+      return;
+    }
+    if (lastCheckOut && day > lastCheckOut) {
+      // Too long a stay — start a new selection from this day instead.
+      if (nightOpen(day)) onSelect(day, null);
       return;
     }
     if (rangeHasClosedNight(checkIn, day)) {
@@ -131,7 +149,9 @@ export function RangeCalendar({
             const past = day < todayISO;
             // Closed days are not selectable, except as a check-out after a
             // valid check-in (you leave that morning, so it needn't be open).
-            const disabled = past || (closed && !(checkIn && !checkOut && day > checkIn));
+            const choosingCheckOut = Boolean(checkIn && !checkOut && day > checkIn);
+            const tooFar = choosingCheckOut && lastCheckOut !== null && day > lastCheckOut;
+            const disabled = past || tooFar || (closed && !choosingCheckOut);
 
             const nightPrice =
               basePrice !== undefined && !disabled && nightOpen(day)

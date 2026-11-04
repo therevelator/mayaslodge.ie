@@ -6,6 +6,8 @@ import { useFormStatus } from "react-dom";
 import { RangeCalendar } from "./RangeCalendar";
 import { requestBooking, type BookingFormState } from "@/app/(site)/rooms/[slug]/actions";
 import { formatPrice } from "@/lib/format";
+import { MAX_NIGHTS } from "@/lib/constants";
+import { EmailField, PhoneField } from "./ContactFields";
 
 function nightsBetween(a: string, b: string): number {
   const ms = new Date(`${b}T00:00:00Z`).getTime() - new Date(`${a}T00:00:00Z`).getTime();
@@ -91,6 +93,7 @@ export function BookingWidget({
           <RangeCalendar
             available={available}
             todayISO={todayISO}
+            maxNights={MAX_NIGHTS}
             basePrice={basePrice}
             customPrices={customPrices}
             currency={currency}
@@ -134,7 +137,9 @@ export function BookingWidget({
           </>
         ) : (
           <p className="text-muted">
-            {checkIn ? "Now choose your check-out date." : "Pick your check-in date to begin."}
+            {checkIn
+              ? `Now choose your check-out date (up to ${MAX_NIGHTS} nights).`
+              : "Pick your check-in date to begin."}
           </p>
         )}
       </div>
@@ -150,14 +155,8 @@ export function BookingWidget({
           <input id="guestName" name="guestName" className="input" required autoComplete="name" />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label className="label" htmlFor="guestEmail">Email</label>
-            <input id="guestEmail" name="guestEmail" type="email" className="input" required autoComplete="email" />
-          </div>
-          <div>
-            <label className="label" htmlFor="guestPhone">Phone</label>
-            <input id="guestPhone" name="guestPhone" className="input" required autoComplete="tel" />
-          </div>
+          <EmailField />
+          <PhoneField />
         </div>
         <div>
           <label className="label" htmlFor="guests">Guests</label>

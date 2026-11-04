@@ -92,3 +92,6 @@ export const CURRENCY_SYMBOLS: Record<string, string> = {
   GBP: "£",
   USD: "$",
 };
+
+/** Longest stay guests can request online (nights). */
+export const MAX_NIGHTS = 7;

@@ -7,6 +7,8 @@ import { isRoomAvailable, isRangeOpen } from "@/lib/availability";
 import { dateFromISO, nightsBetween, todayUTC } from "@/lib/dates";
 import { captureRequestMeta } from "@/lib/request-meta";
 import { stayTotal } from "@/lib/pricing";
+import { MAX_NIGHTS } from "@/lib/constants";
+import { sanitizePhone, isAcceptablePhone, isValidEmail } from "@/lib/contact-validation";
 
 // All guest fields are required.
 const schema = z.object({
@@ -14,8 +16,15 @@ const schema = z.object({
   checkIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a check-in date"),
   checkOut: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a check-out date"),
   guestName: z.string().trim().min(2, "Please tell us your name"),
-  guestEmail: z.string().trim().email("Enter a valid email"),
-  guestPhone: z.string().trim().min(6, "Please add a phone number").max(40),
+  guestEmail: z
+    .string()
+    .trim()
+    .email("Enter a valid email")
+    .refine(isValidEmail, "Enter a valid email"),
+  guestPhone: z
+    .string()
+    .transform(sanitizePhone)
+    .refine(isAcceptablePhone, "Enter a valid phone number (digits and + only)"),
   guests: z.coerce.number().int().min(1).max(20),
   message: z.string().trim().min(1, "Please add a short message").max(2000),
 });
@@ -46,6 +55,12 @@ export async function requestBooking(
 
   if (nights < 1) {
     return { ok: false, error: "Check-out must be after check-in." };
+  }
+  if (nights > MAX_NIGHTS) {
+    return {
+      ok: false,
+      error: `Online requests are limited to ${MAX_NIGHTS} nights. For longer stays, please get in touch.`,
+    };
   }
   if (checkIn < todayUTC()) {
     return { ok: false, error: "Check-in cannot be in the past." };
