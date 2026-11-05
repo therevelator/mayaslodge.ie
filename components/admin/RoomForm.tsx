@@ -13,6 +13,7 @@ type AmenityOption = { key: string; label: string; category: string | null };
 type RoomData = {
   id: string;
   name: string;
+  adminName: string | null;
   slug: string;
   roomType: string;
   shortDesc: string | null;
@@ -72,6 +73,11 @@ export function RoomForm({
             <label className="label" htmlFor="name">Room name</label>
             <input id="name" name="name" className="input" required defaultValue={room?.name} placeholder="The Shamrock Room" />
           </div>
+          <div className="sm:col-span-2">
+            <label className="label" htmlFor="adminName">Internal name (admin only)</label>
+            <input id="adminName" name="adminName" className="input" maxLength={60} defaultValue={room?.adminName ?? ""} placeholder="e.g. Room 3 – first floor, front" />
+            <p className="mt-1 text-xs text-muted">Guests never see this. It&apos;s how the room shows up in the calendar and bookings, so rooms with the same name are easy to tell apart.</p>
+          </div>
           <div>
             <label className="label" htmlFor="roomType">Room type</label>
             <select id="roomType" name="roomType" className="input" defaultValue={room?.roomType ?? "Double"}>
@@ -79,10 +85,6 @@ export function RoomForm({
                 <option key={t} value={t}>{t}</option>
               ))}
             </select>
-          </div>
-          <div>
-            <label className="label" htmlFor="basePrice">Price per night (€)</label>
-            <input id="basePrice" name="basePrice" className="input" required inputMode="decimal" defaultValue={room ? (room.basePrice / 100).toString() : ""} placeholder="95" />
           </div>
           <div>
             <label className="label" htmlFor="maxGuests">Max guests</label>

@@ -9,6 +9,7 @@ import {
   unblockDates,
   setDatesOpen,
   createManualBooking,
+  setStandardPrice,
 } from "@/app/admin/actions";
 import { formatPrice, parsePriceToCents } from "@/lib/format";
 
@@ -76,6 +77,8 @@ export function PriceCalendar({
   const [end, setEnd] = useState<string | null>(null);
   const [price, setPrice] = useState("");
   const [showReservation, setShowReservation] = useState(false);
+  const [editingStandard, setEditingStandard] = useState(false);
+  const [standardInput, setStandardInput] = useState("");
   const [message, setMessage] = useState<Msg>(null);
   const [pending, startTransition] = useTransition();
 
@@ -229,10 +232,52 @@ export function PriceCalendar({
 
       <div className="mt-5 rounded-xl bg-cream-deep/60 p-4">
         {days.length === 0 ? (
-          <p className="text-sm text-muted">
-            Standard price: <strong className="text-ink">{formatPrice(basePrice, currency)}</strong> / night. Select a day
-            or a range to change its price, open or close it for guests, block it, or add a reservation.
-          </p>
+          <div className="space-y-3 text-sm">
+            {editingStandard ? (
+              <form
+                className="flex flex-wrap items-center gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  run(() => setStandardPrice(roomId, standardInput), "Standard price saved.");
+                  setEditingStandard(false);
+                }}
+              >
+                <label htmlFor="standardPrice" className="text-ink">Standard price (€ / night)</label>
+                <input
+                  id="standardPrice"
+                  className="input w-28"
+                  inputMode="decimal"
+                  autoFocus
+                  value={standardInput}
+                  onChange={(e) => setStandardInput(e.target.value)}
+                  placeholder="95"
+                />
+                <button type="submit" className="btn btn-primary px-3 py-1.5 text-sm" disabled={pending}>Save</button>
+                <button type="button" className="btn btn-ghost px-3 py-1.5 text-sm" onClick={() => setEditingStandard(false)}>Cancel</button>
+              </form>
+            ) : (
+              <p className="flex flex-wrap items-center gap-2 text-muted">
+                {basePrice > 0 ? (
+                  <span>Standard price: <strong className="text-ink">{formatPrice(basePrice, currency)}</strong> / night</span>
+                ) : (
+                  <span className="text-orange-dark">No standard price yet. Nights without a custom price can&apos;t be booked.</span>
+                )}
+                <button
+                  type="button"
+                  className="text-xs font-medium text-brand hover:text-brand-dark"
+                  onClick={() => {
+                    setStandardInput(basePrice > 0 ? (basePrice / 100).toString() : "");
+                    setEditingStandard(true);
+                  }}
+                >
+                  {basePrice > 0 ? "Change" : "Set standard price"}
+                </button>
+              </p>
+            )}
+            <p className="text-muted">
+              Select a day or a range to change its price, open or close it for guests, block it, or add a reservation.
+            </p>
+          </div>
         ) : (
           <div className="space-y-4">
             <div className="flex flex-wrap items-baseline justify-between gap-2">

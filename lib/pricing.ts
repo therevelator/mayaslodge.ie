@@ -79,3 +79,17 @@ export async function getDisplayPrices(
   }
   return out;
 }
+
+/** Does any night in [checkIn, checkOut) have no price at all (no custom, no standard)? */
+export async function hasUnpricedNight(
+  room: { id: string; basePrice: number },
+  checkIn: Date,
+  checkOut: Date
+): Promise<boolean> {
+  if (room.basePrice > 0) return false;
+  const custom = await getCustomPrices(room.id, checkIn, checkOut);
+  for (let d = new Date(checkIn); d < checkOut; d = addDays(d, 1)) {
+    if (!((custom[d.toISOString().slice(0, 10)] ?? 0) > 0)) return true;
+  }
+  return false;
+}

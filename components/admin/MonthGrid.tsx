@@ -83,7 +83,7 @@ export function MonthGrid({
           const past = iso < todayISO;
           const custom = prices?.[iso];
           // Price shown on the day: the custom one if set, else the standard one.
-          const shownPrice = past ? undefined : (custom ?? basePrice);
+          const shownPrice = past ? undefined : (custom ?? (basePrice ? basePrice : undefined));
           const isSelected = selected?.has(iso) ?? false;
           // Guest-booked days can't be selected; blocked days can (to unblock them).
           const guestBooked = Boolean(booking && booking.source !== "BLOCK");

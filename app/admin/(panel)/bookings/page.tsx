@@ -9,6 +9,7 @@ import { BookingMeta } from "@/components/admin/BookingMeta";
 import { setBookingStatus, deleteBooking } from "@/app/admin/actions";
 import { BOOKING_STATUSES } from "@/lib/constants";
 import { SubmitButton } from "@/components/admin/SubmitButton";
+import { roomLabel } from "@/lib/room-label";
 
 const FILTERS = [
   { key: "ALL", label: "All" },
@@ -84,7 +85,7 @@ export default async function AdminBookingsPage({
                     <SourceBadge source={b.source} />
                   </div>
                   <div className="mt-1 text-sm text-muted">
-                    {b.room.name} · {formatDate(b.checkIn)} → {formatDate(b.checkOut)} ·{" "}
+                    {roomLabel(b.room)} · {formatDate(b.checkIn)} → {formatDate(b.checkOut)} ·{" "}
                     {nightsBetween(b.checkIn, b.checkOut)} night(s) · {b.guests} guest(s)
                     {b.totalPrice ? ` · ${formatPrice(b.totalPrice, settings.currency)}` : ""}
                   </div>

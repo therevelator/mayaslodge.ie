@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { RoomForm } from "@/components/admin/RoomForm";
 import { ImageManager } from "@/components/admin/ImageManager";
+import { roomLabel } from "@/lib/room-label";
 
 export const metadata = { title: "Edit room" };
 
@@ -31,7 +32,7 @@ export default async function EditRoomPage({
       <div className="flex items-center justify-between">
         <div>
           <Link href="/admin/rooms" className="text-sm font-medium text-brand hover:text-brand-dark">← Rooms</Link>
-          <h1 className="mt-2 text-2xl font-semibold text-brand-dark">{room.name}</h1>
+          <h1 className="mt-2 text-2xl font-semibold text-brand-dark">{roomLabel(room)}</h1>
         </div>
         <Link href={`/rooms/${room.slug}`} target="_blank" className="btn btn-ghost text-sm">View on site ↗</Link>
       </div>
@@ -48,6 +49,7 @@ export default async function EditRoomPage({
         room={{
           id: room.id,
           name: room.name,
+          adminName: room.adminName,
           slug: room.slug,
           roomType: room.roomType,
           shortDesc: room.shortDesc,

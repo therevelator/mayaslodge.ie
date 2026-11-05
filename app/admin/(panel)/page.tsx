@@ -7,6 +7,7 @@ import { StatusBadge, SourceBadge } from "@/components/admin/StatusBadge";
 import { BookingMeta } from "@/components/admin/BookingMeta";
 import { setBookingStatus } from "@/app/admin/actions";
 import { SubmitButton } from "@/components/admin/SubmitButton";
+import { roomLabel } from "@/lib/room-label";
 
 export default async function AdminDashboard() {
   const today = todayUTC();
@@ -82,7 +83,7 @@ export default async function AdminDashboard() {
                     <SourceBadge source={b.source} />
                   </div>
                   <div className="mt-1 text-sm text-muted">
-                    {b.room.name} · {formatDate(b.checkIn)} → {formatDate(b.checkOut)} ·{" "}
+                    {roomLabel(b.room)} · {formatDate(b.checkIn)} → {formatDate(b.checkOut)} ·{" "}
                     {nightsBetween(b.checkIn, b.checkOut)} night(s) · {b.guests} guest(s)
                   </div>
                   {b.message && <p className="mt-1 text-sm text-ink/70">“{b.message}”</p>}
@@ -141,7 +142,7 @@ export default async function AdminDashboard() {
                 {upcomingArrivals.map((b) => (
                   <tr key={b.id}>
                     <td className="px-4 py-2.5 font-medium">{b.guestName}</td>
-                    <td className="px-4 py-2.5 text-muted">{b.room.name}</td>
+                    <td className="px-4 py-2.5 text-muted">{roomLabel(b.room)}</td>
                     <td className="px-4 py-2.5">{formatDate(b.checkIn)}</td>
                     <td className="px-4 py-2.5">{nightsBetween(b.checkIn, b.checkOut)}</td>
                   </tr>

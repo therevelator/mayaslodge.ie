@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { VisibilityToggle } from "@/components/admin/VisibilityToggle";
+import { roomLabel } from "@/lib/room-label";
 
 export const metadata = { title: "Show / hide rooms" };
 
@@ -9,7 +10,7 @@ export const metadata = { title: "Show / hide rooms" };
 export default async function VisibilityPage() {
   const rooms = await prisma.room.findMany({
     orderBy: { sortOrder: "asc" },
-    select: { id: true, name: true, published: true },
+    select: { id: true, name: true, adminName: true, published: true },
   });
   const liveCount = rooms.filter((r) => r.published).length;
 
@@ -36,7 +37,7 @@ export default async function VisibilityPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {rooms.map((room) => (
-            <VisibilityToggle key={room.id} id={room.id} name={room.name} published={room.published} />
+            <VisibilityToggle key={room.id} id={room.id} name={roomLabel(room)} published={room.published} />
           ))}
         </div>
       )}

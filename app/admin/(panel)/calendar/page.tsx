@@ -8,6 +8,7 @@ import { getCustomPrices } from "@/lib/pricing";
 import { getSettings } from "@/lib/settings";
 import { CalendarRoomPicker } from "@/components/admin/CalendarRoomPicker";
 import { AdminBookingRow } from "@/components/admin/AdminBookingRow";
+import { roomLabel } from "@/lib/room-label";
 
 function parseMonth(input?: string): { year: number; month: number } {
   if (input && /^\d{4}-\d{2}$/.test(input)) {
@@ -94,7 +95,7 @@ export default async function AdminCalendarPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-brand-dark">Calendar</h1>
         <CalendarRoomPicker
-          rooms={rooms.map((r) => ({ id: r.id, name: r.name }))}
+          rooms={rooms.map((r) => ({ id: r.id, name: roomLabel(r) }))}
           selectedId={selectedRoom.id}
           month={month1}
         />
@@ -127,7 +128,7 @@ export default async function AdminCalendarPage({
       {/* Bookings shown in this view, with quick actions */}
       <section>
         <h2 className="text-lg font-semibold text-brand-dark">
-          {selectedRoom.name} — bookings in view
+          {roomLabel(selectedRoom)} — bookings in view
         </h2>
         {bookings.length === 0 ? (
           <p className="mt-2 rounded-xl bg-white p-6 text-sm text-muted">
@@ -138,7 +139,7 @@ export default async function AdminCalendarPage({
             {bookings.map((b) => (
               <AdminBookingRow
                 key={b.id}
-                rooms={rooms.map((r) => ({ id: r.id, name: r.name }))}
+                rooms={rooms.map((r) => ({ id: r.id, name: roomLabel(r) }))}
                 booking={{
                   id: b.id,
                   roomId: b.roomId,

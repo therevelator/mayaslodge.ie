@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/settings";
 import { formatPrice } from "@/lib/format";
 import { deleteRoom } from "@/app/admin/actions";
+import { roomLabel } from "@/lib/room-label";
 
 export default async function AdminRoomsPage() {
   const [settings, rooms] = await Promise.all([
@@ -42,7 +43,8 @@ export default async function AdminRoomsPage() {
               </div>
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <h2 className="font-serif text-lg font-semibold text-brand-dark">{room.name}</h2>
+                  <h2 className="font-serif text-lg font-semibold text-brand-dark">{roomLabel(room)}</h2>
+                  {room.adminName && <p className="text-xs text-muted">{room.name}</p>}
                   <span className="text-sm font-semibold text-ink">{formatPrice(room.basePrice, settings.currency)}</span>
                 </div>
                 <p className="mt-0.5 text-xs text-muted">

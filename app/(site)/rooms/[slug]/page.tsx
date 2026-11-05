@@ -68,7 +68,10 @@ export default async function RoomDetailPage({
   // Bookable = open days minus occupied days. Rooms are closed by default, so
   // an unopened room has no bookable dates.
   const occupied = occupiedDaySet(stays);
-  const available = Array.from(openDaySet(windows)).filter((d) => !occupied.has(d));
+  // Nights without a price (no custom price and no standard price yet) can't be booked.
+  const available = Array.from(openDaySet(windows)).filter(
+    (d) => !occupied.has(d) && (customPrices[d] ?? room.basePrice) > 0
+  );
 
   // Group amenities by category for display.
   const byCategory = room.amenities.reduce<Record<string, typeof room.amenities>>(

@@ -397,6 +397,17 @@ export async function clearDayPrices(roomId: string, dates: string[]): Promise<D
  * included). Nights that are already blocked are skipped; guest bookings in
  * the range stop the whole action.
  */
+/** Change a room's standard nightly price (used for nights without a custom price). */
+export async function setStandardPrice(roomId: string, price: string): Promise<DayPriceState> {
+  await requireSession();
+  const cents = parsePriceToCents(price);
+  if (!roomId || cents <= 0) return { error: "Enter a price per night." };
+  if (cents > 10_000_00) return { error: "That price looks too high." };
+  await prisma.room.update({ where: { id: roomId }, data: { basePrice: cents } });
+  revalidateCalendar();
+  return { ok: true };
+}
+
 export async function blockDates(roomId: string, first: string, last: string): Promise<DayPriceState> {
   await requireSession();
   if (!validRange(roomId, first, last)) return { error: "Select a day or a range of days first." };
@@ -554,6 +565,7 @@ async function uniqueSlug(base: string, ignoreId?: string): Promise<string> {
 
 const roomSchema = z.object({
   name: z.string().trim().min(2, "Room name is required"),
+  adminName: z.string().trim().max(60).optional().or(z.literal("")),
   roomType: z.string().trim().min(1, "Choose a room type"),
   shortDesc: z.string().trim().max(200).optional().or(z.literal("")),
   description: z.string().trim().min(1, "Add a description"),
@@ -577,8 +589,6 @@ export async function saveRoom(
     return { error: parsed.error.issues[0]?.message ?? "Please check the form." };
   }
   const d = parsed.data;
-  const basePrice = parsePriceToCents(String(formData.get("basePrice") ?? "0"));
-  if (basePrice <= 0) return { error: "Enter a nightly price." };
 
   const amenityKeys = formData.getAll("amenityKeys").map(String);
   const amenities = await prisma.amenity.findMany({
@@ -599,7 +609,7 @@ export async function saveRoom(
     maxGuests: d.maxGuests,
     bedConfig: d.bedConfig || null,
     sizeSqm: d.sizeSqm || null,
-    basePrice,
+    adminName: d.adminName || null,
     published: Boolean(formData.get("published")),
     sortOrder: d.sortOrder ?? 0,
   };
@@ -620,6 +630,8 @@ export async function saveRoom(
     await prisma.room.create({
       data: {
         ...data,
+        // Prices are set in the calendar (standard price + per-night prices).
+        basePrice: 0,
         slug,
         amenities: { connect: amenities.map((a) => ({ id: a.id })) },
         beds: { create: beds },

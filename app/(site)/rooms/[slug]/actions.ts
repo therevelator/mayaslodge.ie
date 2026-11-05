@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { isRoomAvailable, isRangeOpen } from "@/lib/availability";
 import { dateFromISO, nightsBetween, todayUTC } from "@/lib/dates";
 import { captureRequestMeta } from "@/lib/request-meta";
-import { stayTotal } from "@/lib/pricing";
+import { stayTotal, hasUnpricedNight } from "@/lib/pricing";
 import { MAX_NIGHTS } from "@/lib/constants";
 import { sanitizePhone, isAcceptablePhone, isValidEmail } from "@/lib/contact-validation";
 
@@ -76,6 +76,11 @@ export async function requestBooking(
 
   // Re-check on the server — never trust the client calendar.
   // 1) The whole range must be inside the room's open dates.
+  const totalPrice = await stayTotal(room, checkIn, checkOut);
+  if (await hasUnpricedNight(room, checkIn, checkOut)) {
+    return { ok: false, error: "Some of these nights aren't available to book online yet." };
+  }
+
   const open = await isRangeOpen(room.id, checkIn, checkOut);
   if (!open) {
     return {
@@ -106,7 +111,7 @@ export async function requestBooking(
       guests: data.guests,
       message: data.message,
       nights,
-      totalPrice: await stayTotal(room, checkIn, checkOut),
+      totalPrice,
       status: "PENDING",
       source: "WEBSITE",
       ...meta,
